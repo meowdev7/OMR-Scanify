@@ -1,0 +1,9 @@
+{
+  "student": {
+    "name": "Adolf Hitler",
+    "class": "XI",
+    "section": "A1",
+    "roll_no": "67"
+  },
+  "answers": ["A", "C", "B", null, "D", "A", "B", "C"]
+}

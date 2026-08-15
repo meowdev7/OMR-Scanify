@@ -1,0 +1,10 @@
+# Go
+backend/bin/
+backend/tmp/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
