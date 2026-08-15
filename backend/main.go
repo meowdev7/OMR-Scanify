@@ -1,26 +1,12 @@
 package main
 
 import (
+	"backend/evaluator"
+	"backend/models"
 	"encoding/json"
 	"fmt"
 	"os"
 )
-
-
-type Student struct {
-	StudentInfo struct {
-		Name    string `json:"name"`
-		Class   string `json:"class"`
-		Section string `json:"section"`
-		RollNo  string `json:"roll_no"`
-	} `json:"student"`
-
-	Answers []*string `json:"answers"`
-}
-
-type SolutionKey struct {
-	CorrectAnswers []*string `json:"correct_answers"`
-}
 
 func main() {
 	data, err := os.ReadFile("../test/sample.json")
@@ -35,8 +21,8 @@ func main() {
 		panic(err)
 	}
 
-	var key SolutionKey
-	var stu Student
+	var key models.SolutionKey
+	var stu models.Student
 
 	err = json.Unmarshal(data, &stu)
 
@@ -49,14 +35,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// formattedJson, err := json.MarshalIndent(stu, "", " ")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("%s\n", formattedJson)
-	// fmt.Println(stu)
-
-	// replacing placeholders with the actual data
 
 	for i, subkey := range key.CorrectAnswers {
 		fmt.Printf("Correct Answer %d: %s\n", i+1, *subkey)
@@ -75,42 +53,11 @@ func main() {
 	}
 
 	println("Checking answers...")
-	checkedAnswers := checkAnswers(stu, key)
+	checkedAnswers := evaluator.CheckAnswers(stu, key)
 	for i, result := range checkedAnswers {
 		fmt.Printf("Answer %d: %s\n", i+1, result)
 	}
 
-	marks := calculateMarks(checkedAnswers)
-	fmt.Printf("Total Marks: %d/%d\n", marks, len(key.CorrectAnswers)) 
-}
-
-
-func checkAnswers (stu Student, key SolutionKey) []string {
-	totalQuestions := len(key.CorrectAnswers)
-	questions := make([]string, totalQuestions)
-
-	for i := 0; i < totalQuestions; i++ {
-		if i < len(stu.Answers) && stu.Answers[i] != nil {
-			if *stu.Answers[i] == *key.CorrectAnswers[i] {
-				questions[i] = "Correct"
-			} else {
-				questions[i] = "Incorrect"
-			}
-		} else {
-			questions[i] = "Unattempted"
-		}
-
-	}
-
-	return questions
-}
-
-func calculateMarks(questions []string) int {
-	marks := 0
-	for _, result := range questions {
-		if result == "Correct" {
-			marks++
-		}
-	}
-	return marks
+	marks := evaluator.CalculateMarks(checkedAnswers)
+	fmt.Printf("Total Marks: %d/%d\n", marks, len(key.CorrectAnswers))
 }
