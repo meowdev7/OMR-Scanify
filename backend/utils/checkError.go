@@ -8,9 +8,16 @@ func CheckError(e error) {
 	}
 }
 
-func CheckHTTPError(w http.ResponseWriter, e error, message string, statusCode int) {
-	if e != nil {
-		panic(e)
+func CheckHTTPError(
+	w http.ResponseWriter,
+	err error,
+	message string,
+	status int,
+) bool {
+	if err != nil {
+		http.Error(w, message, status)
+		return true
 	}
-	http.Error(w, message, statusCode)
+
+	return false
 }
