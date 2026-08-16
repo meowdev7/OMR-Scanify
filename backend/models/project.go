@@ -6,5 +6,5 @@ type Project struct {
 	QuestionCount int       `json:"question_count"`
 	AnswerKey     []string  `json:"answer_key"`
 	Students      []Student `json:"students"`
+	Results       []Result  `json:"results"`
 }
-
