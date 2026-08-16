@@ -38,7 +38,7 @@ dashsubtitle= Label(window,
 dashsubtitle.place(x=282 , y=120)
 
 quickscan=Label(window,
-             text="Quick Scan" ,
+             text="New Project" ,
              font=('Segoe UI', 16, 'bold'),
              fg='#FFFFFF',
              bg='black')
