@@ -1,35 +1,30 @@
 package evaluator
 
-import (
-	"backend/models"
-)
-
-func CheckAnswers(stu models.Student, key models.SolutionKey) []string {
-	totalQuestions := len(key.CorrectAnswers)
-	questions := make([]string, totalQuestions)
+func CheckAnswers(answers []*string, answerKey []string) []string {
+	totalQuestions := len(answerKey)
+	results := make([]string, totalQuestions)
 
 	for i := 0; i < totalQuestions; i++ {
-		if i < len(stu.Answers) && stu.Answers[i] != nil {
-			if *stu.Answers[i] == *key.CorrectAnswers[i] {
-				questions[i] = "Correct"
-			} else {
-				questions[i] = "Incorrect"
-			}
+		if i >= len(answers) || answers[i] == nil {
+			results[i] = "Unattempted"
+		} else if *answers[i] == answerKey[i] {
+			results[i] = "Correct"
 		} else {
-			questions[i] = "Unattempted"
+			results[i] = "Incorrect"
 		}
-
 	}
 
-	return questions
+	return results
 }
 
-func CalculateMarks(questions []string) int {
+func CalculateMarks(results []string) int {
 	marks := 0
-	for _, result := range questions {
+	
+	for _, result := range results {
 		if result == "Correct" {
 			marks++
 		}
 	}
+
 	return marks
 }
