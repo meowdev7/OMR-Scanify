@@ -7,7 +7,7 @@ OMR-Scanify is a school project developed by a group of XII graders to automate 
 *   **Achintya Srivastava** (@meowdev7) [XII A1] — Project Lead, Backend (Go)
 *   **Aryan Kushwaha** (@theprogrammer001) [XII B1] — OMR Scanning & Sheet Generation (Python / OpenCV)
 *   **Kushagra Sharma** (@flinshnezh) [XII B1] — Desktop GUI Interface (Python / Tkinter)
-*   **Raj Tandon** [XII A1] — Quality Assurance, Testing & GUI Support
+*   **Raj Tandon** (@darklord1904-og) [XII A1] — Quality Assurance, Testing & GUI Support
 
 ---
 
