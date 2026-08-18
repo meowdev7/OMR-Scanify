@@ -1,5 +1,22 @@
 from tkinter import Toplevel, Label, Entry, Button
 
+import requests
+
+
+def create_project(project_window, project_name, question_count):
+    data = {
+        "name": project_name,
+        "question_count": int(question_count)
+    }
+
+    response = requests.post(
+        "http://127.0.0.1:8000/api/v1/projects",
+        json=data
+    )
+
+    print("Status:", response.status_code)
+    print("Response:", response.json())
+
 
 def create_project_window(parent):
 
