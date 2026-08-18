@@ -1,7 +1,9 @@
 from tkinter import *
+from functions import create_project_window
+
 
 def start_scan(event=None):
-    print("Starting new scan...")
+    create_project_window(window)
     # Later:
     # open file dialog / camera / scanning screen
 
@@ -105,6 +107,10 @@ card_subtitle.bind("<Leave>", card_leave)
 
 card_image_label.bind("<Enter>", card_enter)
 card_image_label.bind("<Leave>", card_leave)
+
+
+
+
 
 
 
