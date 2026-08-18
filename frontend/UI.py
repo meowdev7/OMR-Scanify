@@ -1,6 +1,23 @@
 from tkinter import *
 from functions import create_project_window
 
+import requests
+
+
+def create_project(project_window, project_name, question_count):
+    data = {
+        "name": project_name,
+        "question_count": question_count
+    }
+
+    response = requests.post(
+        "http://127.0.0.1:8000/api/v1/projects",
+        json=data
+    )
+
+    print("Backend response:", response.status_code)
+    print(response.json())
+
 
 def start_scan(event=None):
     create_project_window(window)
