@@ -37,6 +37,7 @@ func isValidMCQAnswer(value string) bool {
 		return false
 	}
 }
+
 // Also null or nil will be treated as unattempted, so we don't need to check for that here
 
 // SubmissionHandler handles POST /api/v1/projects/{id}/submissions
@@ -140,12 +141,14 @@ func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	p := project.CreateProject(req.Name, req.QuestionCount)
 	writeJSON(w, http.StatusCreated, p)
+	fmt.Printf("Created project: %+v\n", p)
 }
 
 // ListProjectsHandler handles GET /api/v1/projects
 
 func ListProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, project.Projects)
+	fmt.Printf("Listed projects: %+v\n", project.Projects)
 }
 
 // GetProjectHandler handles GET /api/v1/projects/{id}
@@ -162,6 +165,7 @@ func GetProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, p)
+	fmt.Printf("Retrieved project: %+v\n", p)
 }
 
 // UpdateAnswerKeyHandler handles PUT /api/v1/projects/{id}/answer-key
@@ -206,6 +210,7 @@ func UpdateAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {
 
 	p.AnswerKey = normalized
 	writeJSON(w, http.StatusOK, map[string]string{"status": "answer key updated"})
+	fmt.Printf("Updated answer key for project %s: %+v\n", p.ID, p.AnswerKey)
 }
 
 // ImportStudentsHandler handles POST /api/v1/projects/{id}/students/import (CSV body)
@@ -292,6 +297,7 @@ func ImportStudentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, imported)
+	fmt.Printf("Imported %d students for project %s\n", len(imported), p.ID)
 }
 
 // ListResultsHandler handles GET /api/v1/projects/{id}/results
@@ -308,6 +314,9 @@ func ListResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, p.Results)
+
+	fmt.Printf("Listed results for project %s: %+v\n", p.ID, p.Results)
+
 }
 
 // ExportResultsCSVHandler handles GET /api/v1/projects/{id}/results/export
@@ -352,4 +361,6 @@ func ExportResultsCSVHandler(w http.ResponseWriter, r *http.Request) {
 	if err := writer.Error(); err != nil {
 		http.Error(w, "Failed to finalize CSV output", http.StatusInternalServerError)
 	}
+
+	fmt.Printf("Exported results for project %s to CSV\n", p.ID)
 }
