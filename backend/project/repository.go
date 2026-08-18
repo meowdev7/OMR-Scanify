@@ -1,6 +1,9 @@
 package project
 
-import "backend/models"
+import (
+	"backend/models"
+	"fmt"
+)
 
 var Projects = []models.Project{
 	{
@@ -35,9 +38,9 @@ var Projects = []models.Project{
 				SheetID: "PHY-001-S0002",
 			},
 		},
+		Results: []models.Result{},
 	},
 }
-
 
 func GetProjectByID(id string) *models.Project {
 	for i := range Projects {
@@ -55,4 +58,29 @@ func GetStudentBySheetID(p *models.Project, sheetID string) *models.Student {
 		}
 	}
 	return nil
+}
+
+func CreateProject(name string, questionCount int) *models.Project {
+	id := fmt.Sprintf("PRJ-%03d", len(Projects)+1)
+	p := models.Project{
+		ID:            id,
+		Name:          name,
+		QuestionCount: questionCount,
+		AnswerKey:     []string{},
+		Students:      []models.Student{},
+		Results:       []models.Result{},
+	}
+	Projects = append(Projects, p)
+	return &Projects[len(Projects)-1]
+}
+
+func AddResultToProject(p *models.Project, r models.Result) {
+	for i := range p.Results {
+		if p.Results[i].SheetID == r.SheetID {
+			p.Results[i] = r
+			return
+		}
+	}
+
+	p.Results = append(p.Results, r)
 }

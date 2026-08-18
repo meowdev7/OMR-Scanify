@@ -15,12 +15,19 @@ NOTE ->
 func main() {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /api/v1/projects", api.ListProjectsHandler)
+	mux.HandleFunc("POST /api/v1/projects", api.CreateProjectHandler)
+
+	mux.HandleFunc("GET /api/v1/projects/{id}", api.GetProjectHandler)
+	mux.HandleFunc("PUT /api/v1/projects/{id}/answer-key", api.UpdateAnswerKeyHandler)
+	mux.HandleFunc("POST /api/v1/projects/{id}/students/import", api.ImportStudentsHandler)
 	mux.HandleFunc("POST /api/v1/projects/{id}/submissions", api.SubmissionHandler)
+	mux.HandleFunc("GET /api/v1/projects/{id}/results", api.ListResultsHandler)
+	mux.HandleFunc("GET /api/v1/projects/{id}/results/export", api.ExportResultsCSVHandler)
 
 	fmt.Println("Server listening on :8080")
 
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		panic(err)
 	}
 }
