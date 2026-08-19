@@ -4,6 +4,7 @@ import (
 	"backend/evaluator"
 	"backend/models"
 	"backend/project"
+	"backend/storage"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
 	}
@@ -38,8 +40,6 @@ func isValidMCQAnswer(value string) bool {
 	}
 }
 
-// Also null or nil will be treated as unattempted, so we don't need to check for that here
-
 // SubmissionHandler handles POST /api/v1/projects/{id}/submissions
 
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +56,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var submission models.Submission
+
 	if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Invalid JSON")
 		return
@@ -78,7 +79,11 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(submission.Answers) != p.QuestionCount {
-		writeJSONError(w, http.StatusBadRequest, "Answer count does not match project question count")
+		writeJSONError(
+			w,
+			http.StatusBadRequest,
+			"Answer count does not match project question count",
+		)
 		return
 	}
 
@@ -86,18 +91,30 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		if a == nil {
 			continue
 		}
+
 		v := normalizeAnswer(*a)
+
 		if !isValidMCQAnswer(v) {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Invalid answer at index %d", i))
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("Invalid answer at index %d", i),
+			)
 			return
 		}
+
 		*submission.Answers[i] = v
 	}
 
-	checkedAnswers := evaluator.CheckAnswers(submission.Answers, p.AnswerKey)
+	checkedAnswers := evaluator.CheckAnswers(
+		submission.Answers,
+		p.AnswerKey,
+	)
+
 	marks := evaluator.CalculateMarks(checkedAnswers)
 
 	correct, incorrect, unattempted := 0, 0, 0
+
 	for _, res := range checkedAnswers {
 		switch res {
 		case "Correct":
@@ -121,6 +138,16 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	project.AddResultToProject(p, result)
+
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Failed to save project",
+		)
+		return
+	}
+
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -131,23 +158,38 @@ func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 		Name          string `json:"name"`
 		QuestionCount int    `json:"question_count"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
-	if req.Name == "" || req.QuestionCount <= 0 {
+
+	if strings.TrimSpace(req.Name) == "" || req.QuestionCount <= 0 {
 		writeJSONError(w, http.StatusBadRequest, "Invalid project data")
 		return
 	}
+
 	p := project.CreateProject(req.Name, req.QuestionCount)
-	writeJSON(w, http.StatusCreated, p)
+
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Failed to save project",
+		)
+		return
+	}
+
 	fmt.Printf("Created project: %+v\n", p)
+
+	writeJSON(w, http.StatusCreated, p)
 }
 
 // ListProjectsHandler handles GET /api/v1/projects
 
 func ListProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, project.Projects)
+
 	fmt.Printf("Listed projects: %+v\n", project.Projects)
 }
 
@@ -155,16 +197,21 @@ func ListProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetProjectHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+
 	if id == "" {
 		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
 		return
 	}
+
 	p := project.GetProjectByID(id)
+
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
 	}
+
 	writeJSON(w, http.StatusOK, p)
+
 	fmt.Printf("Retrieved project: %+v\n", p)
 }
 
@@ -172,11 +219,14 @@ func GetProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+
 	if id == "" {
 		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
 		return
 	}
+
 	p := project.GetProjectByID(id)
+
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
@@ -185,81 +235,138 @@ func UpdateAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AnswerKey []string `json:"answer_key"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
+
 	if len(req.AnswerKey) != p.QuestionCount {
-		writeJSONError(w, http.StatusBadRequest, "Answer key length must match project question count")
+		writeJSONError(
+			w,
+			http.StatusBadRequest,
+			"Answer key length must match project question count",
+		)
 		return
 	}
 
 	normalized := make([]string, len(req.AnswerKey))
+
 	for i, answer := range req.AnswerKey {
-		if answer == "" {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Invalid answer key at index %d", i))
+		if strings.TrimSpace(answer) == "" {
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("Invalid answer key at index %d", i),
+			)
 			return
 		}
+
 		v := normalizeAnswer(answer)
+
 		if !isValidMCQAnswer(v) {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Invalid answer key at index %d", i))
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("Invalid answer key at index %d", i),
+			)
 			return
 		}
+
 		normalized[i] = v
 	}
 
 	p.AnswerKey = normalized
-	writeJSON(w, http.StatusOK, map[string]string{"status": "answer key updated"})
-	fmt.Printf("Updated answer key for project %s: %+v\n", p.ID, p.AnswerKey)
+
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Failed to save project",
+		)
+		return
+	}
+
+	fmt.Printf(
+		"Updated answer key for project %s: %+v\n",
+		p.ID,
+		p.AnswerKey,
+	)
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status": "answer key updated",
+	})
 }
 
-// ImportStudentsHandler handles POST /api/v1/projects/{id}/students/import (CSV body)
+// ImportStudentsHandler handles POST /api/v1/projects/{id}/students/import
+// CSV body
 
 func ImportStudentsHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+
 	if id == "" {
 		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
 		return
 	}
+
 	p := project.GetProjectByID(id)
+
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
 	}
 
 	reader := csv.NewReader(r.Body)
+
 	records, err := reader.ReadAll()
 	if err != nil && err != io.EOF {
 		writeJSONError(w, http.StatusBadRequest, "Invalid CSV")
 		return
 	}
+
 	if len(records) < 1 {
-		writeJSONError(w, http.StatusBadRequest, "CSV missing header or rows")
+		writeJSONError(
+			w,
+			http.StatusBadRequest,
+			"CSV missing header or rows",
+		)
 		return
 	}
 
 	header := records[0]
+
 	idxMap := map[string]int{}
+
 	for i, h := range header {
 		idxMap[strings.ToLower(strings.TrimSpace(h))] = i
 	}
+
 	for _, field := range []string{"id", "name", "roll_no"} {
 		if _, ok := idxMap[field]; !ok {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("CSV missing required column: %s", field))
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("CSV missing required column: %s", field),
+			)
 			return
 		}
 	}
 
 	existingStudents := make(map[string]bool)
+
 	for _, student := range p.Students {
 		existingStudents[student.ID] = true
 	}
+
 	seenWithinCSV := make(map[string]bool)
+
 	var imported []models.Student
+
 	start := len(p.Students)
 
 	for i := 1; i < len(records); i++ {
 		row := records[i]
+
 		if len(row) == 0 {
 			continue
 		}
@@ -267,12 +374,22 @@ func ImportStudentsHandler(w http.ResponseWriter, r *http.Request) {
 		idValue := strings.TrimSpace(row[idxMap["id"]])
 		nameValue := strings.TrimSpace(row[idxMap["name"]])
 		rollNoValue := strings.TrimSpace(row[idxMap["roll_no"]])
+
 		if idValue == "" || nameValue == "" || rollNoValue == "" {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Row %d missing required fields", i+1))
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("Row %d missing required fields", i+1),
+			)
 			return
 		}
+
 		if seenWithinCSV[idValue] || existingStudents[idValue] {
-			writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Duplicate student ID: %s", idValue))
+			writeJSONError(
+				w,
+				http.StatusBadRequest,
+				fmt.Sprintf("Duplicate student ID: %s", idValue),
+			)
 			return
 		}
 
@@ -281,67 +398,123 @@ func ImportStudentsHandler(w http.ResponseWriter, r *http.Request) {
 			Name:   nameValue,
 			RollNo: rollNoValue,
 		}
+
 		if v, ok := idxMap["class"]; ok && v < len(row) {
 			student.Class = strings.TrimSpace(row[v])
 		}
+
 		if v, ok := idxMap["section"]; ok && v < len(row) {
 			student.Section = strings.TrimSpace(row[v])
 		}
 
 		seq := start + len(imported) + 1
-		student.SheetID = fmt.Sprintf("%s-S%04d", p.ID, seq)
+
+		student.SheetID = fmt.Sprintf(
+			"%s-S%04d",
+			p.ID,
+			seq,
+		)
+
 		p.Students = append(p.Students, student)
 		imported = append(imported, student)
+
 		seenWithinCSV[idValue] = true
 		existingStudents[idValue] = true
 	}
 
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Failed to save project",
+		)
+		return
+	}
+
+	fmt.Printf(
+		"Imported %d students for project %s\n",
+		len(imported),
+		p.ID,
+	)
+
 	writeJSON(w, http.StatusOK, imported)
-	fmt.Printf("Imported %d students for project %s\n", len(imported), p.ID)
 }
 
 // ListResultsHandler handles GET /api/v1/projects/{id}/results
 
 func ListResultsHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+
 	if id == "" {
 		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
 		return
 	}
+
 	p := project.GetProjectByID(id)
+
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
 	}
+
 	writeJSON(w, http.StatusOK, p.Results)
 
-	fmt.Printf("Listed results for project %s: %+v\n", p.ID, p.Results)
-
+	fmt.Printf(
+		"Listed results for project %s: %+v\n",
+		p.ID,
+		p.Results,
+	)
 }
 
-// ExportResultsCSVHandler handles GET /api/v1/projects/{id}/results/export
+// ExportResultsCSVHandler handles
+// GET /api/v1/projects/{id}/results/export
 
 func ExportResultsCSVHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+
 	if id == "" {
 		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
 		return
 	}
+
 	p := project.GetProjectByID(id)
+
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
 	}
 
-	filename := fmt.Sprintf("project-%s-results.csv", p.ID)
+	filename := fmt.Sprintf(
+		"project-%s-results.csv",
+		p.ID,
+	)
+
 	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	w.Header().Set(
+		"Content-Disposition",
+		fmt.Sprintf(`attachment; filename="%s"`, filename),
+	)
 
 	writer := csv.NewWriter(w)
-	if err := writer.Write([]string{"sheet_id", "student_id", "student_name", "correct", "incorrect", "unattempted", "marks", "total_questions"}); err != nil {
-		http.Error(w, "Failed to write CSV header", http.StatusInternalServerError)
+
+	if err := writer.Write([]string{
+		"sheet_id",
+		"student_id",
+		"student_name",
+		"correct",
+		"incorrect",
+		"unattempted",
+		"marks",
+		"total_questions",
+	}); err != nil {
+		http.Error(
+			w,
+			"Failed to write CSV header",
+			http.StatusInternalServerError,
+		)
 		return
 	}
+
 	for _, result := range p.Results {
 		if err := writer.Write([]string{
 			result.SheetID,
@@ -353,14 +526,28 @@ func ExportResultsCSVHandler(w http.ResponseWriter, r *http.Request) {
 			strconv.Itoa(result.Marks),
 			strconv.Itoa(result.TotalQuestions),
 		}); err != nil {
-			http.Error(w, "Failed to write CSV row", http.StatusInternalServerError)
+			http.Error(
+				w,
+				"Failed to write CSV row",
+				http.StatusInternalServerError,
+			)
 			return
 		}
 	}
+
 	writer.Flush()
+
 	if err := writer.Error(); err != nil {
-		http.Error(w, "Failed to finalize CSV output", http.StatusInternalServerError)
+		http.Error(
+			w,
+			"Failed to finalize CSV output",
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
-	fmt.Printf("Exported results for project %s to CSV\n", p.ID)
+	fmt.Printf(
+		"Exported results for project %s to CSV\n",
+		p.ID,
+	)
 }

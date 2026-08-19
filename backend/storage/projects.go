@@ -9,52 +9,96 @@ import (
 	"backend/models"
 )
 
-const projectsFileName = "projects.json"
+const projectsDirName = "projects"
 
-func projectsFilePath() (string, error) {
+func projectsDirPath() (string, error) {
 	appDataDir, err := AppDataDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(appDataDir, projectsFileName), nil
+
+	dir := filepath.Join(appDataDir, projectsDirName)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create projects directory: %w", err)
+	}
+
+	return dir, nil
+}
+
+func projectFilePath(id string) (string, error) {
+	dir, err := projectsDirPath()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, id+".json"), nil
 }
 
 func SaveProjects(projects []models.Project) error {
-	filePath, err := projectsFilePath()
-	if err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(projects, "", "    ")
-	if err != nil {
-		return fmt.Errorf("failed to encode projects: %w", err)
-	}
+	for _, project := range projects {
+		filePath, err := projectFilePath(project.ID)
+		if err != nil {
+			return err
+		}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write projects: %w", err)
+		data, err := json.MarshalIndent(project, "", "    ")
+		if err != nil {
+			return fmt.Errorf("failed to encode project %s: %w", project.ID, err)
+		}
+
+		if err := os.WriteFile(filePath, data, 0644); err != nil {
+			return fmt.Errorf("failed to write project %s: %w", project.ID, err)
+		}
 	}
 
 	return nil
 }
 
 func LoadProjects() ([]models.Project, error) {
-	filePath, err := projectsFilePath()
+	dir, err := projectsDirPath()
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(filePath)
-	if os.IsNotExist(err) { // ts is for a first-time user
-		return []models.Project{}, nil
-	}
-
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read projects: %w", err)
+		return nil, fmt.Errorf("failed to read projects directory: %w", err)
 	}
 
-	var projects []models.Project
+	projects := make([]models.Project, 0)
 
-	if err := json.Unmarshal(data, &projects); err != nil {
-		return nil, fmt.Errorf("failed to decode projects: %w", err)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		if filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		filePath := filepath.Join(dir, entry.Name())
+
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to read project file %s: %w",
+				entry.Name(),
+				err,
+			)
+		}
+
+		var project models.Project
+
+		if err := json.Unmarshal(data, &project); err != nil {
+			return nil, fmt.Errorf(
+				"failed to decode project file %s: %w",
+				entry.Name(),
+				err,
+			)
+		}
+
+		projects = append(projects, project)
 	}
 
 	return projects, nil
