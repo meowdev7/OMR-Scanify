@@ -10,7 +10,7 @@ def create_project(project_window, project_name, question_count):
     }
 
     response = requests.post(
-        "http://127.0.0.1:8000/api/v1/projects",
+        "http://127.0.0.1:8080/api/v1/projects",
         json=data
     )
 

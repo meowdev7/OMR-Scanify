@@ -8,3 +8,10 @@ backend/tmp/
 # OS
 .DS_Store
 Thumbs.db
+
+# Python
+
+frontend/__pycache__/
+services/__pycache__/
+
+.idea/
