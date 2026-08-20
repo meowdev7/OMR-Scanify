@@ -1,6 +1,6 @@
 from tkinter import *
 from functions import create_project_window
-
+from sidebar import create_sidebar
 import requests
 
 
@@ -40,6 +40,7 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
+sidebar = create_sidebar(window)    #created a sidebar using the create_sidebar function from sidebar.py
 
 label= Label(window,   # added a label for the dashboard title
              text="Dashboard" , 
