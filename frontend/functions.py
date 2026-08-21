@@ -1,30 +1,18 @@
-from tkinter import Toplevel, Label, Entry, Button, messagebox
+from tkinter import Toplevel, Label, Entry, Button
 
 import requests
 
 
 def create_project(project_window, project_name, question_count, on_created=None):
-    try:
-        question_count = int(question_count)
-    except ValueError:
-        messagebox.showerror("Invalid project", "Number of questions must be a positive integer.", parent=project_window)
-        return
-
     data = {
         "name": project_name,
-        "question_count": question_count
+        "question_count": int(question_count)
     }
 
-    try:
-        response = requests.post(
-            "http://127.0.0.1:8080/api/v1/projects",
-            json=data,
-            timeout=5
-        )
-        response.raise_for_status()
-    except (requests.RequestException, ValueError) as error:
-        messagebox.showerror("Could not create project", str(error), parent=project_window)
-        return
+    response = requests.post(
+        "http://127.0.0.1:8080/api/v1/projects",
+        json=data
+    )
 
     print("Status:", response.status_code)
     print("Response:", response.json())
