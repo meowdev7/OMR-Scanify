@@ -31,7 +31,12 @@ def card_enter(event=None):
 def card_leave(event=None):
     project_card.config(highlightbackground="#2A2F36")
 def show_dashboard():
-    print("Dashboard selected")
+    projects_page.pack_forget()
+    dashboard_frame.pack(
+        side="left",
+        fill="both",
+        expand=True
+    )
 
 
 def show_projects():
@@ -58,30 +63,38 @@ window.iconphoto(True, icon)
 window.config(background="black")
 sidebar = create_sidebar(window, show_dashboard, show_projects)    #created a sidebar using the create_sidebar function from sidebar.py
 
-label= Label(window,   # added a label for the dashboard title
+content_frame = Frame(window, bg="black")
+content_frame.pack(side="left", fill="both", expand=True)
+
+dashboard_frame = Frame(content_frame, bg="black")
+dashboard_frame.pack(side="left", fill="both", expand=True)
+
+projects_page = create_projects_page(content_frame)
+
+label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 
              font=('Segoe UI', 26 , 'bold' ), 
              fg='white', 
              bg='black')
 
-label.place(x=280 , y=75)
+label.place(x=60, y=75)
 
-dashsubtitle= Label(window,   # added a label for the dashboard subtitle
+dashsubtitle= Label(dashboard_frame,   # added a label for the dashboard subtitle
              text="Create and manage OMR projects with ease." ,
                 font=('Segoe UI', 14),
                 fg='#A7A7A7',
                 bg='black')
-dashsubtitle.place(x=282 , y=120)
+dashsubtitle.place(x=62, y=120)
 
-project=Label(window,     # added a label for the project section
+project=Label(dashboard_frame,     # added a label for the project section
              text="Project" ,
              font=('Segoe UI', 16, 'bold'),
              fg='#FFFFFF',
              bg='black')
-project.place(x=280, y=190)
+project.place(x=60, y=190)
 
 project_card = Frame(    # added a frame for the project card
-    window,
+    dashboard_frame,
     bg="#15181D",
     highlightbackground="#2A2F36",
     highlightthickness=1,
@@ -90,7 +103,7 @@ project_card = Frame(    # added a frame for the project card
 
 
 project_card.place(    #place the project card frame on the window
-    x=280,
+    x=60,
     y=225,
     width=900,
     height=150
