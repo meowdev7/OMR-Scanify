@@ -69,7 +69,7 @@ content_frame.pack(side="left", fill="both", expand=True)
 dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
-projects_page = create_projects_page(content_frame)
+projects_page = create_projects_page(content_frame, start_scan)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 

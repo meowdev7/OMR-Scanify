@@ -1,31 +1,207 @@
 import tkinter as tk
 
+pro_img = None
 
-def create_projects_page(window):
-    # Main Projects page
-    projects_page = tk.Frame(
-        window,
-        bg="black"
-    )
 
-    # Page title
-    title = tk.Label(
-        projects_page,
+def create_projects_page(window, on_create_project=None):
+    global pro_img
+
+    pro_img = tk.PhotoImage(file="frontend/empty_project_img.png").subsample(5, 5)
+    projects_page = tk.Frame(window, bg="#080A0D")
+
+    header = tk.Frame(projects_page, bg="#080A0D")
+    header.pack(fill="x", padx=26, pady=(22, 0))
+
+    heading_group = tk.Frame(header, bg="#080A0D")
+    heading_group.pack(side="left")
+
+    tk.Label(
+        heading_group,
         text="Projects",
-        font=("Segoe UI", 26, "bold"),
-        fg="white",
-        bg="black"
-    )
-    title.place(x=60, y=50)
+        font=("Segoe UI", 25, "bold"),
+        fg="#F4F7FB",
+        bg="#080A0D"
+    ).pack(anchor="w")
 
-    # Subtitle
-    subtitle = tk.Label(
-        projects_page,
+    tk.Label(
+        heading_group,
         text="View and manage your OMR projects.",
-        font=("Segoe UI", 14),
-        fg="#A7A7A7",
-        bg="black"
+        font=("Segoe UI", 10),
+        fg="#8B939E",
+        bg="#080A0D"
+    ).pack(anchor="w", pady=(2, 0))
+
+    create_button = tk.Button(
+        header,
+        text="+  New Project",
+        font=("Segoe UI", 10, "bold"),
+        fg="#FFFFFF",
+        bg="#1769E8",
+        activeforeground="#FFFFFF",
+        activebackground="#2B7CF0",
+        relief="flat",
+        bd=0,
+        padx=13,
+        pady=7,
+        cursor="hand2",
+        command=on_create_project
     )
-    subtitle.place(x=62, y=95)
+    create_button.pack(side="right", anchor="n", pady=(9, 0))
+
+    toolbar = tk.Frame(projects_page, bg="#080A0D")
+    toolbar.pack(fill="x", padx=26, pady=(21, 0))
+
+    search_frame = tk.Frame(
+        toolbar,
+        bg="#11151B",
+        highlightbackground="#252B34",
+        highlightthickness=1
+    )
+    search_frame.pack(side="left", fill="x", expand=True, padx=(0, 12))
+
+    tk.Label(
+        search_frame,
+        text="?",
+        font=("Segoe UI", 11, "bold"),
+        fg="#8B939E",
+        bg="#11151B"
+    ).pack(side="left", padx=(11, 6))
+
+    tk.Entry(
+        search_frame,
+        font=("Segoe UI", 10),
+        fg="#E8EDF4",
+        bg="#11151B",
+        insertbackground="#FFFFFF",
+        relief="flat",
+        bd=0
+    ).pack(side="left", fill="x", expand=True, ipady=7, padx=(0, 10))
+
+    sort_button = tk.Button(
+        toolbar,
+        text="Sort by: Recent  v",
+        font=("Segoe UI", 9),
+        fg="#B9C1CC",
+        bg="#0D1116",
+        activeforeground="#FFFFFF",
+        activebackground="#171D25",
+        relief="flat",
+        highlightbackground="#252B34",
+        highlightthickness=1,
+        bd=0,
+        padx=12,
+        pady=7,
+        cursor="hand2"
+    )
+    sort_button.pack(side="left")
+
+    tk.Button(
+        toolbar,
+        text="[]",
+        font=("Segoe UI", 10, "bold"),
+        fg="#3C8BFF",
+        bg="#111C2D",
+        activeforeground="#FFFFFF",
+        activebackground="#172943",
+        relief="flat",
+        bd=0,
+        padx=9,
+        pady=6,
+        cursor="hand2"
+    ).pack(side="left", padx=(12, 4))
+
+    tk.Button(
+        toolbar,
+        text="=",
+        font=("Segoe UI", 11, "bold"),
+        fg="#7C8591",
+        bg="#0D1116",
+        activeforeground="#FFFFFF",
+        activebackground="#171D25",
+        relief="flat",
+        bd=0,
+        padx=9,
+        pady=6,
+        cursor="hand2"
+    ).pack(side="left")
+
+    tk.Label(
+        projects_page,
+        text="Your Projects",
+        font=("Segoe UI", 11, "bold"),
+        fg="#F4F7FB",
+        bg="#080A0D"
+    ).pack(anchor="w", padx=26, pady=(20, 8))
+
+    empty_state = tk.Frame(
+        projects_page,
+        bg="#090C10",
+        highlightbackground="#242A33",
+        highlightthickness=1
+    )
+    empty_state.pack(fill="x", padx=26, ipady=19)
+
+    illustration = tk.Frame(empty_state, bg="#090C10")
+    illustration.pack(pady=(0, 2))
+
+    image_label = tk.Label(
+        illustration,
+        image=pro_img,
+        bg="#090C10"
+    )
+    image_label.image = pro_img
+    image_label.pack()
+
+    tk.Label(
+        empty_state,
+        text="No projects yet",
+        font=("Segoe UI", 13, "bold"),
+        fg="#E8EDF4",
+        bg="#090C10"
+    ).pack(pady=(0, 4))
+
+    tk.Label(
+        empty_state,
+        text="Create your first OMR project to get started.",
+        font=("Segoe UI", 9),
+        fg="#8B939E",
+        bg="#090C10"
+    ).pack()
+
+    tk.Button(
+        empty_state,
+        text="+  Create New Project",
+        font=("Segoe UI", 10, "bold"),
+        fg="#FFFFFF",
+        bg="#1769E8",
+        activeforeground="#FFFFFF",
+        activebackground="#2B7CF0",
+        relief="flat",
+        bd=0,
+        padx=13,
+        pady=6,
+        cursor="hand2",
+        command=on_create_project
+    ).pack(pady=(13, 0))
+
+    info = tk.Frame(projects_page, bg="#0B1423")
+    info.pack(fill="x", padx=26, pady=(13, 0))
+
+    tk.Label(
+        info,
+        text="i",
+        font=("Segoe UI", 9, "bold"),
+        fg="#3C8BFF",
+        bg="#0B1423"
+    ).pack(side="left", padx=(10, 7), pady=8)
+
+    tk.Label(
+        info,
+        text="Projects you create will appear here. You can upload answer sheets, answer keys, and generate OMRs.",
+        font=("Segoe UI", 8),
+        fg="#AEB7C5",
+        bg="#0B1423",
+        anchor="w"
+    ).pack(side="left", fill="x", expand=True, pady=8)
 
     return projects_page
