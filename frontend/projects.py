@@ -1,5 +1,6 @@
 import tkinter as tk
 from storage import load_projects
+from assets import asset_path
 
 pro_img = None
 
@@ -7,7 +8,7 @@ pro_img = None
 def create_projects_page(window, on_create_project=None):
     global pro_img
 
-    pro_img = tk.PhotoImage(file="frontend/empty_project_img.png").subsample(5, 5)
+    pro_img = tk.PhotoImage(file=asset_path("empty_project_img.png")).subsample(5, 5)
     projects_page = tk.Frame(window, bg="#080A0D")
 
     header = tk.Frame(projects_page, bg="#080A0D")
@@ -134,39 +135,45 @@ def create_projects_page(window, on_create_project=None):
         bg="#080A0D"
     ).pack(anchor="w", padx=26, pady=(20, 8))
 
-    projects = load_projects()
     project_list = tk.Frame(projects_page, bg="#080A0D")
     project_list.pack(fill="both", expand=True, padx=26)
 
-    if projects:
-        for project in projects:
-            project_card = tk.Frame(
-                project_list,
-                bg="#11151B",
-                highlightbackground="#252B34",
-                highlightthickness=1
-            )
-            project_card.pack(fill="x", pady=(0, 10), ipady=12)
+    def refresh_projects():
+        for child in project_list.winfo_children():
+            child.destroy()
 
-            tk.Label(
-                project_card,
-                text=project.get("name", "Untitled Project"),
-                font=("Segoe UI", 12, "bold"),
-                fg="#E8EDF4",
-                bg="#11151B"
-            ).pack(anchor="w", padx=16)
+        projects = load_projects()
 
-            question_count = project.get("question_count", 0)
-            student_count = len(project.get("students") or [])
-            result_count = len(project.get("results") or [])
-            tk.Label(
-                project_card,
-                text=f"{question_count} questions  |  {student_count} students  |  {result_count} results",
-                font=("Segoe UI", 9),
-                fg="#8B939E",
-                bg="#11151B"
-            ).pack(anchor="w", padx=16, pady=(4, 0))
-    else:
+        if projects:
+            for project in projects:
+                project_card = tk.Frame(
+                    project_list,
+                    bg="#11151B",
+                    highlightbackground="#252B34",
+                    highlightthickness=1
+                )
+                project_card.pack(fill="x", pady=(0, 10), ipady=12)
+
+                tk.Label(
+                    project_card,
+                    text=project.get("name", "Untitled Project"),
+                    font=("Segoe UI", 12, "bold"),
+                    fg="#E8EDF4",
+                    bg="#11151B"
+                ).pack(anchor="w", padx=16)
+
+                question_count = project.get("question_count", 0)
+                student_count = len(project.get("students") or [])
+                result_count = len(project.get("results") or [])
+                tk.Label(
+                    project_card,
+                    text=f"{question_count} questions  |  {student_count} students  |  {result_count} results",
+                    font=("Segoe UI", 9),
+                    fg="#8B939E",
+                    bg="#11151B"
+                ).pack(anchor="w", padx=16, pady=(4, 0))
+            return
+
         empty_state = tk.Frame(
             project_list,
             bg="#090C10",
@@ -213,6 +220,9 @@ def create_projects_page(window, on_create_project=None):
             cursor="hand2",
             command=on_create_project
         ).pack(pady=(13, 0))
+
+    projects_page.refresh_projects = refresh_projects
+    refresh_projects()
 
     info = tk.Frame(projects_page, bg="#0B1423")
     info.pack(fill="x", padx=26, pady=(13, 0))

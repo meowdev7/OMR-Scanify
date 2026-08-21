@@ -2,6 +2,7 @@ from tkinter import *
 from functions import create_project_window
 from sidebar import create_sidebar
 from projects import create_projects_page
+from assets import asset_path
 import requests
 
 
@@ -12,7 +13,7 @@ def create_project(project_window, project_name, question_count):
     }
 
     response = requests.post(
-        "http://127.0.0.1:8000/api/v1/projects",
+        "http://127.0.0.1:8080/api/v1/projects",
         json=data
     )
 
@@ -21,7 +22,7 @@ def create_project(project_window, project_name, question_count):
 
 
 def start_scan(event=None):
-    create_project_window(window)
+    create_project_window(window, projects_page.refresh_projects)
     # Later:
     # open file dialog / camera / scanning screen
 
@@ -55,8 +56,8 @@ window = Tk()
 
 window.title("OMR Scanify")    #App name
 window.geometry("1280x720")
-icon = PhotoImage(file='frontend/omricon.png')
-card_image = PhotoImage(file=r'frontend/foldericon.png')   #folder icon of card
+icon = PhotoImage(file=asset_path("omricon.png"))
+card_image = PhotoImage(file=asset_path("foldericon.png"))   #folder icon of card
 card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its original size
 window.iconphoto(True, icon)
 

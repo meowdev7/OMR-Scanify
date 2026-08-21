@@ -1,24 +1,41 @@
-from tkinter import Toplevel, Label, Entry, Button
+from tkinter import Toplevel, Label, Entry, Button, messagebox
 
 import requests
 
 
-def create_project(project_window, project_name, question_count):
+def create_project(project_window, project_name, question_count, on_created=None):
+    try:
+        question_count = int(question_count)
+    except ValueError:
+        messagebox.showerror("Invalid project", "Number of questions must be a positive integer.", parent=project_window)
+        return
+
     data = {
         "name": project_name,
-        "question_count": int(question_count)
+        "question_count": question_count
     }
 
-    response = requests.post(
-        "http://127.0.0.1:8080/api/v1/projects",
-        json=data
-    )
+    try:
+        response = requests.post(
+            "http://127.0.0.1:8080/api/v1/projects",
+            json=data,
+            timeout=5
+        )
+        response.raise_for_status()
+    except (requests.RequestException, ValueError) as error:
+        messagebox.showerror("Could not create project", str(error), parent=project_window)
+        return
 
     print("Status:", response.status_code)
     print("Response:", response.json())
 
+    if on_created is not None:
+        on_created()
 
-def create_project_window(parent):
+    project_window.destroy()
+
+
+def create_project_window(parent, on_created=None):
 
     project_window = Toplevel(parent)
 
@@ -104,7 +121,8 @@ def create_project_window(parent):
     command=lambda: create_project(
         project_window,
         project_name.get(),
-        question_count.get()
+        question_count.get(),
+        on_created
     )
 )
     create_button.pack(pady=5)
