@@ -1,4 +1,5 @@
 import tkinter as tk
+from storage import load_projects
 
 pro_img = None
 
@@ -133,56 +134,85 @@ def create_projects_page(window, on_create_project=None):
         bg="#080A0D"
     ).pack(anchor="w", padx=26, pady=(20, 8))
 
-    empty_state = tk.Frame(
-        projects_page,
-        bg="#090C10",
-        highlightbackground="#242A33",
-        highlightthickness=1
-    )
-    empty_state.pack(fill="x", padx=26, ipady=19)
+    projects = load_projects()
+    project_list = tk.Frame(projects_page, bg="#080A0D")
+    project_list.pack(fill="both", expand=True, padx=26)
 
-    illustration = tk.Frame(empty_state, bg="#090C10")
-    illustration.pack(pady=(0, 2))
+    if projects:
+        for project in projects:
+            project_card = tk.Frame(
+                project_list,
+                bg="#11151B",
+                highlightbackground="#252B34",
+                highlightthickness=1
+            )
+            project_card.pack(fill="x", pady=(0, 10), ipady=12)
 
-    image_label = tk.Label(
-        illustration,
-        image=pro_img,
-        bg="#090C10"
-    )
-    image_label.image = pro_img
-    image_label.pack()
+            tk.Label(
+                project_card,
+                text=project.get("name", "Untitled Project"),
+                font=("Segoe UI", 12, "bold"),
+                fg="#E8EDF4",
+                bg="#11151B"
+            ).pack(anchor="w", padx=16)
 
-    tk.Label(
-        empty_state,
-        text="No projects yet",
-        font=("Segoe UI", 13, "bold"),
-        fg="#E8EDF4",
-        bg="#090C10"
-    ).pack(pady=(0, 4))
+            question_count = project.get("question_count", 0)
+            student_count = len(project.get("students") or [])
+            result_count = len(project.get("results") or [])
+            tk.Label(
+                project_card,
+                text=f"{question_count} questions  |  {student_count} students  |  {result_count} results",
+                font=("Segoe UI", 9),
+                fg="#8B939E",
+                bg="#11151B"
+            ).pack(anchor="w", padx=16, pady=(4, 0))
+    else:
+        empty_state = tk.Frame(
+            project_list,
+            bg="#090C10",
+            highlightbackground="#242A33",
+            highlightthickness=1
+        )
+        empty_state.pack(fill="x", ipady=19)
 
-    tk.Label(
-        empty_state,
-        text="Create your first OMR project to get started.",
-        font=("Segoe UI", 9),
-        fg="#8B939E",
-        bg="#090C10"
-    ).pack()
+        illustration = tk.Frame(empty_state, bg="#090C10")
+        illustration.pack(pady=(0, 2))
 
-    tk.Button(
-        empty_state,
-        text="+  Create New Project",
-        font=("Segoe UI", 10, "bold"),
-        fg="#FFFFFF",
-        bg="#1769E8",
-        activeforeground="#FFFFFF",
-        activebackground="#2B7CF0",
-        relief="flat",
-        bd=0,
-        padx=13,
-        pady=6,
-        cursor="hand2",
-        command=on_create_project
-    ).pack(pady=(13, 0))
+        image_label = tk.Label(illustration, image=pro_img, bg="#090C10")
+        image_label.image = pro_img
+        image_label.pack()
+
+        tk.Label(
+            empty_state,
+            text="No projects yet",
+            font=("Segoe UI", 13, "bold"),
+            fg="#E8EDF4",
+            bg="#090C10"
+        ).pack(pady=(0, 4))
+
+        tk.Label(
+            empty_state,
+            text="Create your first OMR project to get started.",
+            font=("Segoe UI", 9),
+            fg="#8B939E",
+            bg="#090C10"
+        ).pack()
+
+        tk.Button(
+            empty_state,
+            text="+  Create New Project",
+            font=("Segoe UI", 10, "bold"),
+            fg="#FFFFFF",
+            bg="#1769E8",
+            activeforeground="#FFFFFF",
+            activebackground="#2B7CF0",
+            relief="flat",
+            bd=0,
+            padx=13,
+            pady=6,
+            cursor="hand2",
+            command=on_create_project
+        ).pack(pady=(13, 0))
 
     info = tk.Frame(projects_page, bg="#0B1423")
     info.pack(fill="x", padx=26, pady=(13, 0))
