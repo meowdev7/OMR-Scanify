@@ -126,3 +126,4 @@ def card_leave(event):  #change the background color of the project card back to
     card_title.config(bg="#15181D")
     card_subtitle.config(bg="#15181D")
     card_image_label.config(bg="#15181D")
+

@@ -1,6 +1,7 @@
 from tkinter import *
 from functions import create_project_window
 from sidebar import create_sidebar
+from projects import create_projects_page
 import requests
 
 
@@ -29,6 +30,21 @@ def card_enter(event=None):
 
 def card_leave(event=None):
     project_card.config(highlightbackground="#2A2F36")
+def show_dashboard():
+    print("Dashboard selected")
+
+
+def show_projects():
+    # Hide the dashboard
+    dashboard_frame.pack_forget()
+
+    # Show the Projects page
+    projects_page.pack(
+        side="left",
+        fill="both",
+        expand=True
+    )
+
 
 window = Tk()
 
@@ -40,7 +56,7 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
-sidebar = create_sidebar(window)    #created a sidebar using the create_sidebar function from sidebar.py
+sidebar = create_sidebar(window, show_dashboard, show_projects)    #created a sidebar using the create_sidebar function from sidebar.py
 
 label= Label(window,   # added a label for the dashboard title
              text="Dashboard" , 
@@ -125,7 +141,6 @@ card_subtitle.bind("<Leave>", card_leave)
 
 card_image_label.bind("<Enter>", card_enter)
 card_image_label.bind("<Leave>", card_leave)
-
 
 
 

@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-def create_sidebar(window):
+def create_sidebar(window, show_dashboard, show_projects):
 
     # Main sidebar
     sidebar = tk.Frame(
@@ -34,7 +34,7 @@ def create_sidebar(window):
     # Navigation button function
     # -------------------------
 
-    def create_nav_button(text):
+    def create_nav_button(text,command):
 
         button = tk.Button(
             sidebar,
@@ -48,7 +48,8 @@ def create_sidebar(window):
             bd=0,
             anchor="w",
             padx=25,
-            cursor="hand2"
+            cursor="hand2",
+            command=command
         )
 
         button.pack(
@@ -70,9 +71,9 @@ def create_sidebar(window):
         return button
 
     # Dashboard navigation
-    dashboard_button = create_nav_button("Dashboard")
+    dashboard_button = create_nav_button("Dashboard", show_dashboard)
 
     # Projects navigation
-    projects_button = create_nav_button("Projects")
+    projects_button = create_nav_button("Projects", show_projects)
 
     return sidebar
