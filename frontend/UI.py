@@ -99,7 +99,7 @@ dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
 projects_page = create_projects_page(content_frame, start_scan)
-generator_page = create_omr_generator_page(content_frame, on_back=start_scan)
+generator_page = create_omr_generator_page(content_frame, on_back=show_projects)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 

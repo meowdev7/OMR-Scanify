@@ -638,6 +638,7 @@ import base64
 import hashlib
 import json
 import math
+from pathlib import Path
 import zlib
 import qrcode
 
@@ -858,6 +859,10 @@ class OMRGenerator:
             self.load_font(42)
         )
 
+        self.font_student = (
+            self.load_font(60)
+        )
+
         self.font_small = (
             self.load_font(32)
         )
@@ -877,6 +882,10 @@ class OMRGenerator:
 
         paths = [
 
+            Path("C:/Windows/Fonts/segoeui.ttf"),
+
+            Path("C:/Windows/Fonts/arial.ttf"),
+
             "/usr/share/fonts/truetype/dejavu/"
             "DejaVuSans.ttf",
 
@@ -889,10 +898,7 @@ class OMRGenerator:
 
             try:
 
-                return ImageFont.truetype(
-                    path,
-                    size
-                )
+                return ImageFont.truetype(path, size)
 
             except Exception:
 
@@ -1397,7 +1403,7 @@ class OMRGenerator:
 
                 fill="black",
 
-                font=self.font_medium
+                font=self.font_student
             )
 
             if (
@@ -1415,7 +1421,7 @@ class OMRGenerator:
 
                     fill="black",
 
-                    font=self.font_medium
+                    font=self.font_student
                 )
 
             row_y += 70
