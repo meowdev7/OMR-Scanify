@@ -3,6 +3,7 @@ from functions import create_project_window
 from sidebar import create_sidebar
 from projects import create_projects_page
 from assets import asset_path
+from project_action import create_project_action_window
 import requests
 
 
@@ -22,7 +23,11 @@ def create_project(project_window, project_name, question_count):
 
 
 def start_scan(event=None):
-    create_project_window(window, projects_page.refresh_projects)
+    def project_created(project):
+        projects_page.refresh_projects()
+        create_project_action_window(window, project, show_projects)
+
+    create_project_window(window, project_created)
     # Later:
     # open file dialog / camera / scanning screen
 

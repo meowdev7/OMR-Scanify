@@ -15,10 +15,11 @@ def create_project(project_window, project_name, question_count, on_created=None
     )
 
     print("Status:", response.status_code)
-    print("Response:", response.json())
+    project = response.json()
+    print("Response:", project)
 
     if on_created is not None:
-        on_created()
+        on_created(project)
 
     project_window.destroy()
 
@@ -120,16 +121,3 @@ def create_project_window(parent, on_created=None):
     project_name.focus()
 
     
-def card_enter(event):       #change the background color of the project card when the mouse enters the card area
-    quick_scan_card.config(bg="#1C2128")
-    card_title.config(bg="#1C2128")
-    card_subtitle.config(bg="#1C2128")
-    card_image_label.config(bg="#1C2128")
-
-
-def card_leave(event):  #change the background color of the project card back to the original color when the mouse leaves the card area
-    quick_scan_card.config(bg="#15181D")
-    card_title.config(bg="#15181D")
-    card_subtitle.config(bg="#15181D")
-    card_image_label.config(bg="#15181D")
-
