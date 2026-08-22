@@ -1,1643 +1,698 @@
-import base64
+# # # import PySimpleGUI as sg
+# # # import os
+# # #
+# # #
+# # # class CustomText(sg.Text):
+# # #     """A custom text element with predefined styling."""
+# # #
+# # #     def __init__(self, text, *args, **kwargs):
+# # #         # Define default styles
+# # #         default_font = ('Helvetica', 12, 'bold')
+# # #         default_color = '#FFFFFF'
+# # #         default_bg = '#4A90E2'
+# # #
+# # #         # Merge user kwargs with defaults
+# # #         kwargs['font'] = kwargs.get('font', default_font)
+# # #         kwargs['text_color'] = kwargs.get('text_color', default_color)
+# # #         kwargs['background_color'] = kwargs.get('background_color', default_bg)
+# # #
+# # #         # Initialize the parent PySimpleGUI Text class
+# # #         super().__init__(text, *args, **kwargs)
+# # #
+# # #
+# # # def OMR_generation_form():
+# # #     bg_color = "#212121"
+# # #     button_color = "#2b2a33"
+# # #     buffer = 20
+# # #     questions = 0
+# # #     layout = [
+# # #         [sg.Text("", size=(70, 2), justification="center", background_color=bg_color)],
+# # #
+# # #         [sg.Text("Name: ", size=(buffer, 2), background_color=bg_color), sg.Input(key="Name")],
+# # #         [sg.Text("Class: ", size=(buffer, 2), background_color=bg_color), sg.Input(size=(10, 1), key="Class")],
+# # #         [sg.Text("Section", size=(buffer, 2), background_color=bg_color), sg.Input(size=(10, 1), key="Section")],
+# # #         [sg.Text("Admission Number: ", size=(buffer, 2), background_color=bg_color), sg.Input(size = (10, 1), key="Admission Number")],
+# # #         [sg.Text("Subject: ", size=(buffer, 2), background_color=bg_color), sg.Input(size=(10, 1), key="Subject")],
+# # #         [sg.Text("No of Questions: ", size=(buffer, 2), background_color=bg_color), sg.Input(size=(5, 1), default_text=str(questions) , placeholder=str(questions), enable_events=True ,key="No of Questions"), sg.Button("+", key="INCREMENT", button_color=("#FFFFFF", "#2b2a33")), sg.Button("-", key="DECREMENT", button_color=("#FFFFFF", "#2b2a33"))],
+# # #
+# # #         [sg.Text("File: ", size=(buffer, 2), background_color=bg_color), sg.Input(key="-FILE-"), sg.FileBrowse(file_types=(("csv Files", "*.csv"), ("All Files", "*.*")))],
+# # #
+# # #         [sg.Button("Generate", key="Submit", button_color=("#FFFFFF", "#2b2a33")), sg.Button("Clear", key="-CLEAR-", button_color=("#FFFFFF", "#2b2a33")) ,sg.Cancel(button_color=("#FFFFFF", "#2b2a33"))],
+# # #         [sg.Text("", size=(70, 2), justification="center", background_color=bg_color)],
+# # #
+# # #     ]
+# # #
+# # #
+# # #     Window = sg.Window("OMR GENERATION FORM", layout, background_color=bg_color)
+# # #
+# # #     while True:
+# # #         event, values = Window.read()
+# # #
+# # #         if event == sg.WIN_CLOSED:
+# # #             break
+# # #
+# # #         elif event == "Submit":
+# # #             if not values["-FILE-"]:
+# # #                 values["MODE"] = "single"
+# # #
+# # #                 if not questions:
+# # #                     sg.popup_error("No questions entered", title="Enter Questions")
+# # #
+# # #                 else:
+# # #                     return values
+# # #
+# # #             else:
+# # #                 csv_file = values["-FILE-"]
+# # #
+# # #                 # ==========================
+# # #                 # CSV MODE
+# # #                 # ==========================
+# # #
+# # #                 if csv_file:
+# # #
+# # #                     if not os.path.exists(csv_file):
+# # #                         sg.popup_error("CSV file does not exist.")
+# # #                         continue
+# # #
+# # #                     return {
+# # #                         "mode": "csv",
+# # #                         "csv_file": csv_file
+# # #                     }
+# # #
+# # #                 # ==========================
+# # #                 # SINGLE STUDENT MODE
+# # #                 # ==========================
+# # #
+# # #                 if not questions:
+# # #                     sg.popup_error(
+# # #                         "No questions entered",
+# # #                         title="Enter Questions"
+# # #                     )
+# # #                     continue
+# # #
+# # #                 return {
+# # #                     **values,
+# # #                     "mode": "single"
+# # #                 }
+# # #
+# # #
+# # #
+# # #         elif event == "-CLEAR-":
+# # #             for key, element in Window.key_dict.items():
+# # #                 if isinstance(element, sg.Input):
+# # #                     element.update("")
+# # #
+# # #                     questions = 0
+# # #
+# # #
+# # #         elif event == "Cancel":
+# # #             break
+# # #
+# # #
+# # #         try:
+# # #             if event == "INCREMENT":
+# # #                 questions += 1
+# # #
+# # #             elif event == "DECREMENT":
+# # #                 if questions >= 1:
+# # #                     questions -= 1
+# # #
+# # #             elif event == "No of Questions":
+# # #                 questions = int(values["No of Questions"])
+# # #
+# # #
+# # #             Window["No of Questions"].update(questions)
+# # #
+# # #         except ValueError:
+# # #             ...
+# # #
+# # #     Window.close()
+# # #
+# # #
+# # # if __name__ == "__main__":
+# # #     print(OMR_generation_form())
+# # from json import __main__
+# #
+# # import PySimpleGUI as sg
+# # import os
+# #
+# #
+# # def OMR_generation_form():
+# #
+# #     bg_color = "#212121"
+# #     button_color = "#2b2a33"
+# #     buffer = 20
+# #     questions = 0
+# #
+# #     layout = [
+# #
+# #         [sg.Text(
+# #             "OMR GENERATOR",
+# #             size=(70, 2),
+# #             justification="center",
+# #             background_color=bg_color,
+# #             font=("Helvetica", 16, "bold")
+# #         )],
+# #
+# #         # -------------------------
+# #         # Student information
+# #         # -------------------------
+# #
+# #         [sg.Text(
+# #             "Name: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(key="Name")],
+# #
+# #         [sg.Text(
+# #             "Class: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(size=(10, 1), key="Class")],
+# #
+# #         [sg.Text(
+# #             "Section: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(size=(10, 1), key="Section")],
+# #
+# #         [sg.Text(
+# #             "Admission Number: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(size=(10, 1), key="Admission Number")],
+# #
+# #         [sg.Text(
+# #             "Subject: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(key="Subject")],
+# #
+# #         [sg.Text(
+# #             "No of Questions: ",
+# #             size=(buffer, 2),
+# #             background_color=bg_color
+# #         ),
+# #         sg.Input(
+# #             size=(5, 1),
+# #             default_text="0",
+# #             enable_events=True,
+# #             key="No of Questions"
+# #         ),
+# #         sg.Button(
+# #             "+",
+# #             key="INCREMENT",
+# #             button_color=("#FFFFFF", button_color)
+# #         ),
+# #         sg.Button(
+# #             "-",
+# #             key="DECREMENT",
+# #             button_color=("#FFFFFF", button_color)
+# #         )],
+# #
+# #         # -------------------------
+# #         # CSV
+# #         # -------------------------
+# #
+# #         [
+# #             sg.Text(
+# #                 "CSV File: ",
+# #                 size=(buffer, 2),
+# #                 background_color=bg_color
+# #             ),
+# #
+# #             sg.Input(
+# #                 key="-FILE-",
+# #                 enable_events=True
+# #             ),
+# #
+# #             sg.FileBrowse(
+# #                 file_types=(
+# #                     ("CSV Files", "*.csv"),
+# #                     ("All Files", "*.*")
+# #                 )
+# #             )
+# #         ],
+# #
+# #         # -------------------------
+# #         # Buttons
+# #         # -------------------------
+# #
+# #         [
+# #             sg.Button(
+# #                 "Generate",
+# #                 key="Submit",
+# #                 button_color=("#FFFFFF", button_color)
+# #             ),
+# #
+# #             sg.Button(
+# #                 "Clear",
+# #                 key="-CLEAR-",
+# #                 button_color=("#FFFFFF", button_color)
+# #             ),
+# #
+# #             sg.Cancel(
+# #                 button_color=("#FFFFFF", button_color)
+# #             )
+# #         ],
+# #
+# #         [
+# #             sg.Text(
+# #                 "",
+# #                 size=(70, 2),
+# #                 justification="center",
+# #                 background_color=bg_color
+# #             )
+# #         ],
+# #     ]
+# #
+# #     window = sg.Window(
+# #         "OMR GENERATION FORM",
+# #         layout,
+# #         background_color=bg_color
+# #     )
+# #
+# #     while True:
+# #
+# #         event, values = window.read()
+# #
+# #         if event == sg.WIN_CLOSED:
+# #             break
+# #
+# #         # =========================================================
+# #         # GENERATE
+# #         # =========================================================
+# #
+# #         elif event == "Submit":
+# #
+# #             csv_file = values["-FILE-"].strip()
+# #
+# #             # -----------------------------------------------------
+# #             # CSV MODE
+# #             # -----------------------------------------------------
+# #
+# #             if csv_file:
+# #
+# #                 if not os.path.isfile(csv_file):
+# #
+# #                     sg.popup_error(
+# #                         "The selected CSV file does not exist.",
+# #                         title="Invalid CSV"
+# #                     )
+# #
+# #                     continue
+# #
+# #                 return {
+# #                     "mode": "csv",
+# #                     "csv_file": csv_file
+# #                 }
+# #
+# #             # -----------------------------------------------------
+# #             # SINGLE STUDENT MODE
+# #             # -----------------------------------------------------
+# #
+# #             if questions <= 0:
+# #
+# #                 sg.popup_error(
+# #                     "No questions entered.",
+# #                     title="Enter Questions"
+# #                 )
+# #
+# #                 continue
+# #
+# #             values["mode"] = "single"
+# #
+# #             return values
+# #
+# #         # =========================================================
+# #         # CLEAR
+# #         # =========================================================
+# #
+# #         elif event == "-CLEAR-":
+# #
+# #             for key, element in window.key_dict.items():
+# #
+# #                 if isinstance(element, sg.Input):
+# #
+# #                     element.update("")
+# #
+# #             questions = 0
+# #
+# #             window["No of Questions"].update("0")
+# #
+# #         # =========================================================
+# #         # CANCEL
+# #         # =========================================================
+# #
+# #         elif event == "Cancel":
+# #
+# #             break
+# #
+# #         # =========================================================
+# #         # QUESTION COUNTER
+# #         # =========================================================
+# #
+# #         try:
+# #
+# #             if event == "INCREMENT":
+# #
+# #                 questions += 1
+# #
+# #             elif event == "DECREMENT":
+# #
+# #                 if questions > 0:
+# #                     questions -= 1
+# #
+# #             elif event == "No of Questions":
+# #
+# #                 questions = int(
+# #                     values["No of Questions"]
+# #                 )
+# #
+# #                 if questions < 0:
+# #                     questions = 0
+# #
+# #             window["No of Questions"].update(
+# #                 questions
+# #             )
+# #
+# #         except ValueError:
+# #
+# #             pass
+# #
+# #     window.close()
+# #
+# #
+# # if __name__ == "__main__":
+# #     print(OMR_generation_form())
+#
+# import PySimpleGUI as sg
+# import os
+#
+#
+# def OMR_generation_form():
+#
+#     bg_color = "#212121"
+#     button_color = "#2b2a33"
+#     buffer = 20
+#
+#     questions = 0
+#
+#     single_fields = [
+#         "Name",
+#         "Class",
+#         "Section",
+#         "Admission Number",
+#         "Subject",
+#         "No of Questions"
+#     ]
+#
+#     layout = [
+#
+#         [sg.Text("OMR GENERATOR", size=(70, 2), justification="center", background_color=bg_color, font=("Helvetica", 16, "bold"))],
+#
+#         [sg.Text("Name: ", size=(buffer, 2), background_color=bg_color), sg.Input(key="Name", enable_events=True)],
+#
+#         [sg.Text("Class: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(size=(10, 1),key="Class",enable_events=True)
+#          ],
+#
+#         [sg.Text("Section: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(size=(10, 1),key="Section",enable_events=True)
+#          ],
+#
+#         [sg.Text("Admission Number: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(size=(10, 1),key="Admission Number",enable_events=True)
+#          ],
+#
+#         [sg.Text("Subject: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(key="Subject",enable_events=True)
+#          ],
+#
+#         [sg.Text("No of Questions: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(size=(5, 1),default_text="0",key="No of Questions",enable_events=True),
+#             sg.Button("+",key="INCREMENT",button_color=("#FFFFFF", button_color)),
+#             sg.Button("-",key="DECREMENT",button_color=("#FFFFFF", button_color))
+#          ],
+#
+#         [sg.Text("CSV File: ",size=(buffer, 2),background_color=bg_color),
+#             sg.Input(key="-FILE-",enable_events=True),
+#             sg.FileBrowse(file_types=(("CSV Files", "*.csv"),("All Files", "*.*")))
+#          ],
+#
+#         [sg.Button("Generate",key="Submit",button_color=("#FFFFFF", button_color)),
+#             sg.Button("Clear",key="-CLEAR-",button_color=("#FFFFFF", button_color)),
+#             sg.Cancel(button_color=("#FFFFFF", button_color))
+#          ],
+#
+#         [sg.Text("",size=(70, 2),justification="center",background_color=bg_color)]
+#     ]
+#
+#     window = sg.Window("OMR GENERATION FORM",layout,background_color=bg_color)
+#
+#     # ============================================================
+#     # Update which input source is active
+#     # ============================================================
+#
+#     def update_input_state(values):
+#
+#         # Check whether CSV has been selected
+#         has_csv = bool(
+#             str(values["-FILE-"]).strip()
+#         )
+#
+#         # Check whether any manual field contains data
+#         has_single_data = any(
+#             str(values[key]).strip()
+#             for key in single_fields
+#             if key != "No of Questions"
+#         )
+#
+#         # Question count also counts as manual input
+#         question_text = str(
+#             values["No of Questions"]
+#         ).strip()
+#
+#         if question_text and question_text != "0":
+#             has_single_data = True
+#
+#         # --------------------------------------------------------
+#         # CSV selected
+#         # --------------------------------------------------------
+#
+#         if has_csv:
+#
+#             for key in single_fields:
+#                 window[key].update(disabled=True)
+#
+#             window["INCREMENT"].update(disabled=True)
+#             window["DECREMENT"].update(disabled=True)
+#
+#         # --------------------------------------------------------
+#         # Manual student data entered
+#         # --------------------------------------------------------
+#
+#         elif has_single_data:
+#
+#             window["-FILE-"].update(disabled=True)
+#
+#         # --------------------------------------------------------
+#         # Nothing entered
+#         # --------------------------------------------------------
+#
+#         else:
+#
+#             window["-FILE-"].update(disabled=False)
+#
+#             for key in single_fields:
+#                 window[key].update(disabled=False)
+#
+#             window["INCREMENT"].update(disabled=False)
+#             window["DECREMENT"].update(disabled=False)
+#
+#     # ============================================================
+#     # Event loop
+#     # ============================================================
+#
+#     while True:
+#
+#         event, values = window.read()
+#
+#         if event == sg.WIN_CLOSED:
+#             break
+#
+#         # ========================================================
+#         # GENERATE
+#         # ========================================================
+#
+#         elif event == "Submit":
+#
+#             csv_file = str(
+#                 values["-FILE-"]
+#             ).strip()
+#
+#             # ----------------------------------------------------
+#             # CSV MODE
+#             # ----------------------------------------------------
+#
+#             if csv_file:
+#
+#                 if not os.path.isfile(csv_file):
+#
+#                     sg.popup_error(
+#                         "The selected CSV file does not exist.",
+#                         title="Invalid CSV"
+#                     )
+#
+#                     continue
+#
+#                 return {
+#                     "mode": "csv",
+#                     "csv_file": csv_file
+#                 }
+#
+#             # ----------------------------------------------------
+#             # SINGLE STUDENT MODE
+#             # ----------------------------------------------------
+#
+#             if questions <= 0:
+#
+#                 sg.popup_error(
+#                     "No questions entered.",
+#                     title="Enter Questions"
+#                 )
+#
+#                 continue
+#
+#             values["mode"] = "single"
+#
+#             return values
+#
+#         # ========================================================
+#         # CLEAR
+#         # ========================================================
+#
+#         elif event == "-CLEAR-":
+#
+#             for key in single_fields:
+#
+#                 window[key].update("")
+#
+#             window["-FILE-"].update("")
+#
+#             questions = 0
+#
+#             window[
+#                 "No of Questions"
+#             ].update("0")
+#
+#             update_input_state(values)
+#
+#         # ========================================================
+#         # CANCEL
+#         # ========================================================
+#
+#         elif event == "Cancel":
+#
+#             break
+#
+#         # ========================================================
+#         # CSV changed
+#         # ========================================================
+#
+#         elif event == "-FILE-":
+#
+#             update_input_state(values)
+#
+#         # ========================================================
+#         # Manual input changed
+#         # ========================================================
+#
+#         elif event in single_fields:
+#
+#             update_input_state(values)
+#
+#         # ========================================================
+#         # Increment questions
+#         # ========================================================
+#
+#         elif event == "INCREMENT":
+#
+#             questions += 1
+#
+#             window[
+#                 "No of Questions"
+#             ].update(questions)
+#
+#             update_input_state(values)
+#
+#         # ========================================================
+#         # Decrement questions
+#         # ========================================================
+#
+#         elif event == "DECREMENT":
+#
+#             if questions > 0:
+#                 questions -= 1
+#
+#             window[
+#                 "No of Questions"
+#             ].update(questions)
+#
+#             update_input_state(values)
+#
+#         # ========================================================
+#         # Question input manually changed
+#         # ========================================================
+#
+#         elif event == "No of Questions":
+#
+#             try:
+#
+#                 questions = int(
+#                     values["No of Questions"]
+#                 )
+#
+#                 if questions < 0:
+#                     questions = 0
+#
+#                 window[
+#                     "No of Questions"
+#                 ].update(questions)
+#
+#             except ValueError:
+#
+#                 questions = 0
+#
+#                 window[
+#                     "No of Questions"
+#                 ].update("0")
+#
+#             update_input_state(values)
+#
+#     window.close()
+#
+#
+# if __name__ == "__main__":
+#     OMR_generation_form()
+
+
 import csv
-import hashlib
 import io
 import json
-import math
 import os
 import re
 import sys
 import time
-import zlib
-
 import PySimpleGUI as sg
-import qrcode
+from Generators import OMRGenerator
 
-from PIL import Image, ImageDraw, ImageFont
-
-
-# ============================================================
-# OMR GENERATOR ENGINE
-# ============================================================
-
-class OMRGenerator:
-
-    # ========================================================
-    # PAGE SIZES @ 300 DPI
-    # ========================================================
-
-    PAGE_SIZES = {
-        "A4": (2480, 3508),
-        "A5": (1748, 2480),
-        "A3": (3508, 4961),
-        "Letter": (2550, 3300),
-        "Legal": (2550, 4200),
-    }
-
-    DPI = 300
-
-    # ========================================================
-    # DEFAULTS
-    # ========================================================
-
-    DEFAULTS = {
-
-        "margin": 100,
-
-        "header_height": 470,
-        "start_y": 560,
-        "bottom_margin": 180,
-
-        "question_spacing": 105,
-
-        "column_gap": 70,
-
-        "bubble_spacing": 150,
-        "bubble_radius": 24,
-
-        "question_bubble_gap": 35,
-
-        "registration_marker_size": 60,
-        "registration_marker_margin": 100,
-
-        "border_width": 8,
-    }
-
-    # ========================================================
-    # QR SETTINGS
-    # ========================================================
-
-    QR_SIZE = 300
-
-    QR_GAP = 20
-
-    QR_PREFIX = "OMR1:"
-
-    QR_COMPRESSION_LEVEL = 9
-
-    # ========================================================
-    # CONSTRUCTOR
-    # ========================================================
-
-    def __init__(
-        self,
-        config
-    ):
-
-        self.config = config
-
-        self.page_size = (
-            config["page_size"]
-        )
-
-        self.orientation = (
-            config["orientation"]
-        )
-
-        width, height = self.PAGE_SIZES[
-            self.page_size
-        ]
-
-        if self.orientation == "Landscape":
-
-            width, height = height, width
-
-        self.WIDTH = width
-        self.HEIGHT = height
-
-        # ----------------------------------------------------
-        # Layout
-        # ----------------------------------------------------
-
-        self.MARGIN = config[
-            "margin"
-        ]
-
-        self.HEADER_HEIGHT = config[
-            "header_height"
-        ]
-
-        self.START_Y = config[
-            "start_y"
-        ]
-
-        self.BOTTOM_MARGIN = config[
-            "bottom_margin"
-        ]
-
-        self.QUESTION_SPACING = config[
-            "question_spacing"
-        ]
-
-        self.COLUMN_GAP = config[
-            "column_gap"
-        ]
-
-        self.BUBBLE_SPACING = config[
-            "bubble_spacing"
-        ]
-
-        self.BUBBLE_RADIUS = config[
-            "bubble_radius"
-        ]
-
-        self.QUESTION_BUBBLE_GAP = config[
-            "question_bubble_gap"
-        ]
-
-        # ----------------------------------------------------
-        # Questions
-        # ----------------------------------------------------
-
-        self.choices = tuple(
-            config["choices"]
-        )
-
-        self.questions = config[
-            "questions"
-        ]
-
-        # ----------------------------------------------------
-        # Student information
-        # ----------------------------------------------------
-
-        self.name = str(
-            config["name"]
-        ).strip()
-
-        self.class_standard = str(
-            config["class_standard"]
-        ).strip()
-
-        self.class_division = str(
-            config["class_division"]
-        ).strip()
-
-        self.admission_number = str(
-            config["admission_number"]
-        ).strip()
-
-        self.subject = str(
-            config["subject"]
-        ).strip()
-
-        # ----------------------------------------------------
-        # Sheet ID
-        # ----------------------------------------------------
-
-        self.sheet_id = (
-            self.subject.upper()[:3]
-            + self.admission_number
-        )
-
-        # ----------------------------------------------------
-        # Template ID
-        # ----------------------------------------------------
-
-        self.template_id = (
-            self.generate_template_id()
-        )
-
-        # ----------------------------------------------------
-        # QR
-        # ----------------------------------------------------
-
-        self.qr_enabled = bool(
-            config["qr_enabled"]
-        )
-
-        self.qr_position = config[
-            "qr_position"
-        ]
-
-        self.qr_size = self.QR_SIZE
-
-        # ----------------------------------------------------
-        # Pages
-        # ----------------------------------------------------
-
-        self.pages = []
-
-        # ----------------------------------------------------
-        # Fonts
-        # ----------------------------------------------------
-
-        self.font_large = (
-            self.load_font(55)
-        )
-
-        self.font_medium = (
-            self.load_font(42)
-        )
-
-        self.font_small = (
-            self.load_font(32)
-        )
-
-        self.font_tiny = (
-            self.load_font(26)
-        )
-
-    # ========================================================
-    # FONT LOADER
-    # ========================================================
-
-    def load_font(
-        self,
-        size
-    ):
-
-        paths = [
-
-            "/usr/share/fonts/truetype/dejavu/"
-            "DejaVuSans.ttf",
-
-            "/usr/share/fonts/truetype/"
-            "liberation2/"
-            "LiberationSans-Regular.ttf",
-        ]
-
-        for path in paths:
-
-            try:
-
-                return ImageFont.truetype(
-                    path,
-                    size
-                )
-
-            except Exception:
-
-                continue
-
-        return ImageFont.load_default()
-
-    # ========================================================
-    # TEMPLATE ID
-    # ========================================================
-
-    def generate_template_id(
-        self
-    ):
-
-        template_data = {
-
-            "page_size": self.page_size,
-
-            "orientation": self.orientation,
-
-            "width": self.WIDTH,
-            "height": self.HEIGHT,
-
-            "margin": self.MARGIN,
-
-            "header_height": (
-                self.HEADER_HEIGHT
-            ),
-
-            "start_y": self.START_Y,
-
-            "bottom_margin": (
-                self.BOTTOM_MARGIN
-            ),
-
-            "question_spacing": (
-                self.QUESTION_SPACING
-            ),
-
-            "column_gap": (
-                self.COLUMN_GAP
-            ),
-
-            "bubble_spacing": (
-                self.BUBBLE_SPACING
-            ),
-
-            "bubble_radius": (
-                self.BUBBLE_RADIUS
-            ),
-
-            "question_bubble_gap": (
-                self.QUESTION_BUBBLE_GAP
-            ),
-
-            "choices": "".join(
-                self.choices
-            ),
-        }
-
-        raw = json.dumps(
-            template_data,
-            sort_keys=True,
-            separators=(",", ":")
-        ).encode(
-            "utf-8"
-        )
-
-        digest = hashlib.sha256(
-            raw
-        ).hexdigest()
-
-        return (
-            "TPL-"
-            + digest[:12].upper()
-        )
-
-    # ========================================================
-    # TEMPLATE DETAILS
-    # ========================================================
-
-    def get_template_details(
-        self
-    ):
-
-        return {
-
-            "id": self.template_id,
-
-            "ps": self.page_size,
-
-            "o": self.orientation,
-
-            "w": self.WIDTH,
-            "h": self.HEIGHT,
-
-            "m": self.MARGIN,
-
-            "hh": self.HEADER_HEIGHT,
-
-            "sy": self.START_Y,
-
-            "bm": self.BOTTOM_MARGIN,
-
-            "qs": self.QUESTION_SPACING,
-
-            "cg": self.COLUMN_GAP,
-
-            "bs": self.BUBBLE_SPACING,
-
-            "br": self.BUBBLE_RADIUS,
-
-            "qbg": self.QUESTION_BUBBLE_GAP,
-
-            "choices": "".join(
-                self.choices
-            ),
-
-            "rms": self.DEFAULTS[
-                "registration_marker_size"
-            ],
-
-            "rmm": self.DEFAULTS[
-                "registration_marker_margin"
-            ],
-        }
-
-    # ========================================================
-    # STUDENT DETAILS
-    # ========================================================
-
-    def get_student_details(
-        self
-    ):
-
-        return {
-
-            "admission": (
-                self.admission_number
-            ),
-
-            "name": self.name,
-
-            "class": (
-                self.class_standard
-            ),
-
-            "section": (
-                self.class_division
-            ),
-
-            "subject": self.subject,
-        }
-
-    # ========================================================
-    # SHEET DETAILS
-    # ========================================================
-
-    def get_sheet_details(
-        self,
-        page_number,
-        total_pages,
-        first_question,
-        questions_on_page
-    ):
-
-        return {
-
-            "id": self.sheet_id,
-
-            "page": page_number,
-
-            "pages": total_pages,
-
-            "first": first_question,
-
-            "count": questions_on_page,
-        }
-
-    # ========================================================
-    # BUILD QR DATA
-    # ========================================================
-
-    def build_qr_payload(
-        self,
-        page_number,
-        total_pages,
-        first_question,
-        questions_on_page
-    ):
-
-        payload = {
-
-            "v": 1,
-
-            "sheet": self.get_sheet_details(
-                page_number,
-                total_pages,
-                first_question,
-                questions_on_page
-            ),
-
-            "template": (
-                self.get_template_details()
-            ),
-
-            "student": (
-                self.get_student_details()
-            ),
-        }
-
-        raw_json = json.dumps(
-            payload,
-            separators=(",", ":"),
-            ensure_ascii=False
-        )
-
-        compressed = zlib.compress(
-            raw_json.encode(
-                "utf-8"
-            ),
-            level=self.QR_COMPRESSION_LEVEL
-        )
-
-        encoded = base64.urlsafe_b64encode(
-            compressed
-        ).decode(
-            "ascii"
-        )
-
-        return (
-            self.QR_PREFIX
-            + encoded
-        )
-
-    # ========================================================
-    # DECODE QR PAYLOAD
-    #
-    # Useful for testing the generator itself.
-    # ========================================================
-
-    @staticmethod
-    def decode_qr_payload(
-        payload
-    ):
-
-        if not payload.startswith(
-            OMRGenerator.QR_PREFIX
-        ):
-
-            raise ValueError(
-                "Invalid OMR QR prefix."
-            )
-
-        encoded = payload[
-            len(
-                OMRGenerator.QR_PREFIX
-            ):
-        ]
-
-        compressed = base64.urlsafe_b64decode(
-            encoded.encode(
-                "ascii"
-            )
-        )
-
-        raw_json = zlib.decompress(
-            compressed
-        ).decode(
-            "utf-8"
-        )
-
-        return json.loads(
-            raw_json
-        )
-
-    # ========================================================
-    # PAGE
-    # ========================================================
-
-    def create_page(
-        self
-    ):
-
-        image = Image.new(
-            "RGB",
-            (
-                self.WIDTH,
-                self.HEIGHT
-            ),
-            "white"
-        )
-
-        draw = ImageDraw.Draw(
-            image
-        )
-
-        return (
-            image,
-            draw
-        )
-
-    # ========================================================
-    # REGISTRATION MARKERS
-    # ========================================================
-
-    def draw_registration_markers(
-        self,
-        draw
-    ):
-
-        size = self.DEFAULTS[
-            "registration_marker_size"
-        ]
-
-        margin = self.DEFAULTS[
-            "registration_marker_margin"
-        ]
-
-        positions = [
-
-            (
-                margin,
-                margin
-            ),
-
-            (
-                self.WIDTH
-                - margin
-                - size,
-
-                margin
-            ),
-
-            (
-                margin,
-
-                self.HEIGHT
-                - margin
-                - size
-            ),
-
-            (
-                self.WIDTH
-                - margin
-                - size,
-
-                self.HEIGHT
-                - margin
-                - size
-            ),
-        ]
-
-        for x, y in positions:
-
-            draw.rectangle(
-                [
-                    x,
-                    y,
-                    x + size - 1,
-                    y + size - 1
-                ],
-                fill="black"
-            )
-
-    # ========================================================
-    # BORDER
-    # ========================================================
-
-    def draw_border(
-        self,
-        draw
-    ):
-
-        margin = self.MARGIN
-
-        draw.rectangle(
-            [
-                margin,
-                margin,
-
-                self.WIDTH - margin,
-                self.HEIGHT - margin
-            ],
-
-            outline="black",
-
-            width=self.DEFAULTS[
-                "border_width"
-            ]
-        )
-
-    # ========================================================
-    # HEADER
-    # ========================================================
-
-    def draw_header(
-        self,
-        draw,
-        page_number,
-        total_pages
-    ):
-
-        center_x = (
-            self.WIDTH // 2
-        )
-
-        title = (
-            "OMR ANSWER SHEET"
-        )
-
-        bbox = draw.textbbox(
-            (0, 0),
-            title,
-            font=self.font_large
-        )
-
-        title_width = (
-            bbox[2] - bbox[0]
-        )
-
-        draw.text(
-            (
-                center_x
-                - title_width // 2,
-
-                180
-            ),
-
-            title,
-
-            fill="black",
-
-            font=self.font_large
-        )
-
-        # ----------------------------------------------------
-        # Header fields
-        # ----------------------------------------------------
-
-        fields = []
-
-        if self.config[
-            "header_name"
-        ]:
-
-            fields.append(
-                f"Name: {self.name}"
-            )
-
-        if self.config[
-            "header_class"
-        ]:
-
-            fields.append(
-                f"Class: "
-                f"{self.class_standard}"
-            )
-
-        if self.config[
-            "header_section"
-        ]:
-
-            fields.append(
-                f"Section: "
-                f"{self.class_division}"
-            )
-
-        if self.config[
-            "header_admission"
-        ]:
-
-            fields.append(
-                "Admission No: "
-                f"{self.admission_number}"
-            )
-
-        if self.config[
-            "header_subject"
-        ]:
-
-            fields.append(
-                f"Subject: {self.subject}"
-            )
-
-        row_y = 290
-
-        for index in range(
-            0,
-            len(fields),
-            2
-        ):
-
-            draw.text(
-                (
-                    180,
-                    row_y
-                ),
-
-                fields[index],
-
-                fill="black",
-
-                font=self.font_medium
-            )
-
-            if (
-                index + 1
-                < len(fields)
-            ):
-
-                draw.text(
-                    (
-                        1100,
-                        row_y
-                    ),
-
-                    fields[index + 1],
-
-                    fill="black",
-
-                    font=self.font_medium
-                )
-
-            row_y += 70
-
-        # ----------------------------------------------------
-        # Sheet ID
-        # ----------------------------------------------------
-
-        draw.text(
-            (
-                self.WIDTH - 500,
-                430
-            ),
-
-            f"Sheet ID: {self.sheet_id}",
-
-            fill="black",
-
-            font=self.font_small
-        )
-
-        # ----------------------------------------------------
-        # Page number
-        # ----------------------------------------------------
-
-        page_text = (
-            f"Page {page_number} "
-            f"of {total_pages}"
-        )
-
-        bbox = draw.textbbox(
-            (0, 0),
-            page_text,
-            font=self.font_small
-        )
-
-        page_width = (
-            bbox[2] - bbox[0]
-        )
-
-        draw.text(
-            (
-                self.WIDTH
-                - 180
-                - page_width,
-
-                self.HEIGHT - 180
-            ),
-
-            page_text,
-
-            fill="black",
-
-            font=self.font_small
-        )
-
-        # ----------------------------------------------------
-        # Separator
-        # ----------------------------------------------------
-
-        draw.line(
-            (
-                150,
-
-                self.HEADER_HEIGHT + 20,
-
-                self.WIDTH - 150,
-
-                self.HEADER_HEIGHT + 20
-            ),
-
-            fill="black",
-
-            width=5
-        )
-
-    # ========================================================
-    # QR
-    # ========================================================
-
-    def draw_qr(
-        self,
-        image,
-        draw,
-        page_number,
-        total_pages,
-        first_question,
-        questions_on_page
-    ):
-
-        if not self.qr_enabled:
-
-            return
-
-        size = self.qr_size
-
-        marker_size = self.DEFAULTS[
-            "registration_marker_size"
-        ]
-
-        marker_margin = self.DEFAULTS[
-            "registration_marker_margin"
-        ]
-
-        gap = self.QR_GAP
-
-        qr_data = self.build_qr_payload(
-            page_number,
-            total_pages,
-            first_question,
-            questions_on_page
-        )
-
-        qr = qrcode.QRCode(
-
-            error_correction=(
-                qrcode.constants.ERROR_CORRECT_H
-            ),
-
-            box_size=10,
-
-            border=4
-        )
-
-        qr.add_data(
-            qr_data
-        )
-
-        qr.make(
-            fit=True
-        )
-
-        qr_image = qr.make_image(
-            fill_color="black",
-            back_color="white"
-        ).convert(
-            "RGB"
-        )
-
-        qr_image = qr_image.resize(
-            (
-                size,
-                size
-            ),
-            Image.Resampling.NEAREST
-        )
-
-        # ----------------------------------------------------
-        # Position
-        # ----------------------------------------------------
-
-        if (
-            self.qr_position
-            == "Top Left"
-        ):
-
-            x = (
-                marker_margin
-                + marker_size
-                + gap
-            )
-
-            y = (
-                self.MARGIN
-                + gap
-            )
-
-        elif (
-            self.qr_position
-            == "Top Right"
-        ):
-
-            x = (
-                self.WIDTH
-                - marker_margin
-                - marker_size
-                - gap
-                - size
-            )
-
-            y = (
-                self.MARGIN
-                + gap
-            )
-
-        elif (
-            self.qr_position
-            == "Bottom Left"
-        ):
-
-            x = (
-                self.MARGIN
-                + gap
-            )
-
-            y = (
-                self.HEIGHT
-                - marker_margin
-                - marker_size
-                - gap
-                - size
-            )
-
-        else:
-
-            x = (
-                self.WIDTH
-                - marker_margin
-                - marker_size
-                - gap
-                - size
-            )
-
-            y = (
-                self.HEIGHT
-                - marker_margin
-                - marker_size
-                - gap
-                - size
-            )
-
-        # ----------------------------------------------------
-        # Boundary safety
-        # ----------------------------------------------------
-
-        x = max(
-            0,
-            min(
-                x,
-                self.WIDTH - size
-            )
-        )
-
-        y = max(
-            0,
-            min(
-                y,
-                self.HEIGHT - size
-            )
-        )
-
-        image.paste(
-            qr_image,
-            (
-                x,
-                y
-            )
-        )
-
-    # ========================================================
-    # BUBBLE
-    # ========================================================
-
-    def draw_bubble(
-        self,
-        draw,
-        x,
-        y
-    ):
-
-        radius = self.BUBBLE_RADIUS
-
-        draw.ellipse(
-            [
-                x - radius,
-                y - radius,
-
-                x + radius,
-                y + radius
-            ],
-
-            outline="black",
-
-            width=5
-        )
-
-    # ========================================================
-    # QUESTION NUMBER WIDTH
-    # ========================================================
-
-    def get_question_number_width(
-        self,
-        number
-    ):
-
-        text = (
-            f"{number}."
-        )
-
-        temp_image = Image.new(
-            "RGB",
-            (
-                1,
-                1
-            )
-        )
-
-        temp_draw = ImageDraw.Draw(
-            temp_image
-        )
-
-        bbox = temp_draw.textbbox(
-            (0, 0),
-            text,
-            font=self.font_small
-        )
-
-        return (
-            bbox[2] - bbox[0]
-        )
-
-    # ========================================================
-    # QUESTIONS PER COLUMN
-    # ========================================================
-
-    def get_questions_per_column(
-        self
-    ):
-
-        available_height = (
-            self.HEIGHT
-            - self.START_Y
-            - self.BOTTOM_MARGIN
-        )
-
-        return max(
-            1,
-
-            available_height
-            // self.QUESTION_SPACING
-        )
-
-    # ========================================================
-    # QUESTION WIDTH
-    # ========================================================
-
-    def get_question_width(
-        self
-    ):
-
-        max_number = max(
-            1,
-            self.questions
-        )
-
-        number_width = (
-            self.get_question_number_width(
-                max_number
-            )
-        )
-
-        bubble_area = (
-
-            self.QUESTION_BUBBLE_GAP
-
-            + (
-                self.BUBBLE_RADIUS * 2
-            )
-
-            + (
-                max(
-                    0,
-                    len(self.choices) - 1
-                )
-                * self.BUBBLE_SPACING
-            )
-        )
-
-        return (
-            number_width
-            + bubble_area
-        )
-
-    # ========================================================
-    # MAXIMUM COLUMNS
-    # ========================================================
-
-    def get_max_columns(
-        self
-    ):
-
-        usable_width = (
-            self.WIDTH
-            - 2 * self.MARGIN
-        )
-
-        question_width = (
-            self.get_question_width()
-        )
-
-        if question_width <= 0:
-
-            return 1
-
-        columns = (
-            usable_width
-            + self.COLUMN_GAP
-        ) // (
-            question_width
-            + self.COLUMN_GAP
-        )
-
-        return max(
-            1,
-            int(columns)
-        )
-
-    # ========================================================
-    # QUESTIONS PER PAGE
-    # ========================================================
-
-    def get_questions_per_page(
-        self
-    ):
-
-        rows = (
-            self.get_questions_per_column()
-        )
-
-        columns = (
-            self.get_max_columns()
-        )
-
-        return (
-            rows * columns
-        )
-
-    # ========================================================
-    # DRAW QUESTIONS
-    # ========================================================
-
-    def draw_questions(
-        self,
-        draw,
-        first_question,
-        number_of_questions
-    ):
-
-        rows = (
-            self.get_questions_per_column()
-        )
-
-        columns = math.ceil(
-            number_of_questions
-            / rows
-        )
-
-        max_columns = (
-            self.get_max_columns()
-        )
-
-        columns = min(
-            columns,
-            max_columns
-        )
-
-        usable_width = (
-            self.WIDTH
-            - 2 * self.MARGIN
-        )
-
-        column_width = (
-            usable_width
-            - (
-                columns - 1
-            )
-            * self.COLUMN_GAP
-        ) // columns
-
-        for local_index in range(
-            number_of_questions
-        ):
-
-            question_number = (
-                first_question
-                + local_index
-            )
-
-            column = (
-                local_index
-                // rows
-            )
-
-            row = (
-                local_index
-                % rows
-            )
-
-            x = (
-                self.MARGIN
-                + column
-                * (
-                    column_width
-                    + self.COLUMN_GAP
-                )
-            )
-
-            y = (
-                self.START_Y
-                + row
-                * self.QUESTION_SPACING
-            )
-
-            # ------------------------------------------------
-            # Question number
-            # ------------------------------------------------
-
-            question_text = (
-                f"{question_number}."
-            )
-
-            bbox = draw.textbbox(
-                (0, 0),
-                question_text,
-                font=self.font_small
-            )
-
-            question_width = (
-                bbox[2] - bbox[0]
-            )
-
-            question_height = (
-                bbox[3] - bbox[1]
-            )
-
-            question_y = (
-                y
-                - question_height // 2
-                - bbox[1]
-            )
-
-            draw.text(
-                (
-                    x + 25,
-                    question_y
-                ),
-
-                question_text,
-
-                fill="black",
-
-                font=self.font_small
-            )
-
-            # ------------------------------------------------
-            # Bubble start
-            # ------------------------------------------------
-
-            bubble_start_x = (
-                x
-                + question_width
-                + self.QUESTION_BUBBLE_GAP
-                + self.BUBBLE_RADIUS
-            )
-
-            # ------------------------------------------------
-            # Bubbles
-            # ------------------------------------------------
-
-            for (
-                choice_index,
-                choice
-            ) in enumerate(
-                self.choices
-            ):
-
-                bubble_x = (
-                    bubble_start_x
-                    + choice_index
-                    * self.BUBBLE_SPACING
-                )
-
-                self.draw_bubble(
-                    draw,
-                    bubble_x,
-                    y
-                )
-
-                bbox = draw.textbbox(
-                    (0, 0),
-                    choice,
-                    font=self.font_tiny
-                )
-
-                choice_width = (
-                    bbox[2] - bbox[0]
-                )
-
-                draw.text(
-                    (
-                        bubble_x
-                        - choice_width // 2,
-
-                        y
-                        + self.BUBBLE_RADIUS
-                        + 8
-                    ),
-
-                    choice,
-
-                    fill="black",
-
-                    font=self.font_tiny
-                )
-
-    # ========================================================
-    # GENERATE
-    # ========================================================
-
-    def generate(
-        self
-    ):
-
-        self.pages = []
-
-        rows = (
-            self.get_questions_per_column()
-        )
-
-        max_columns = (
-            self.get_max_columns()
-        )
-
-        questions_per_page = (
-            rows
-            * max_columns
-        )
-
-        total_pages = max(
-            1,
-
-            math.ceil(
-                self.questions
-                / questions_per_page
-            )
-        )
-
-        current_question = 1
-
-        for page_number in range(
-            1,
-            total_pages + 1
-        ):
-
-            remaining = (
-                self.questions
-                - current_question
-                + 1
-            )
-
-            questions_on_page = min(
-                remaining,
-                questions_per_page
-            )
-
-            image, draw = (
-                self.create_page()
-            )
-
-            # ------------------------------------------------
-            # Page graphics
-            # ------------------------------------------------
-
-            self.draw_border(
-                draw
-            )
-
-            self.draw_registration_markers(
-                draw
-            )
-
-            self.draw_header(
-                draw,
-                page_number,
-                total_pages
-            )
-
-            self.draw_qr(
-                image,
-                draw,
-                page_number,
-                total_pages,
-                current_question,
-                questions_on_page
-            )
-
-            self.draw_questions(
-                draw,
-                current_question,
-                questions_on_page
-            )
-
-            self.pages.append(
-                image
-            )
-
-            current_question += (
-                questions_on_page
-            )
-
-        return self.pages
-
-    # ========================================================
-    # SAVE PNG
-    # ========================================================
-
-    def save_png(
-        self,
-        prefix
-    ):
-
-        if not self.pages:
-
-            self.generate()
-
-        for index, page in enumerate(
-            self.pages,
-            start=1
-        ):
-
-            filename = (
-                f"{prefix}_page_{index}.png"
-            )
-
-            page.save(
-                filename,
-                format="PNG",
-                dpi=(
-                    self.DPI,
-                    self.DPI
-                )
-            )
-
-    # ========================================================
-    # SAVE JPEG
-    # ========================================================
-
-    def save_jpeg(
-        self,
-        prefix,
-        extension=".jpg"
-    ):
-
-        if not self.pages:
-
-            self.generate()
-
-        for index, page in enumerate(
-            self.pages,
-            start=1
-        ):
-
-            filename = (
-                f"{prefix}_page_{index}"
-                f"{extension}"
-            )
-
-            jpeg_page = page.convert(
-                "RGB"
-            )
-
-            jpeg_page.save(
-                filename,
-                format="JPEG",
-                quality=100,
-                subsampling=0,
-                dpi=(
-                    self.DPI,
-                    self.DPI
-                )
-            )
-
-    # ========================================================
-    # SAVE PDF
-    # ========================================================
-
-    def save_pdf(
-        self,
-        filename
-    ):
-
-        if not self.pages:
-
-            self.generate()
-
-        pages = [
-            page.convert("RGB")
-            for page in self.pages
-        ]
-
-        pages[0].save(
-            filename,
-            "PDF",
-            resolution=self.DPI,
-            save_all=True,
-            append_images=pages[1:]
-        )
-
-    # ========================================================
-    # GENERIC OUTPUT
-    # ========================================================
-
-    def save_output(
-        self,
-        output_format,
-        prefix
-    ):
-
-        output_format = str(
-            output_format
-        ).strip().upper()
-
-        if output_format == "PDF":
-
-            self.save_pdf(
-                f"{prefix}.pdf"
-            )
-
-            return
-
-        if output_format == "PNG":
-
-            self.save_png(
-                prefix
-            )
-
-            return
-
-        if output_format == "JPG":
-
-            self.save_jpeg(
-                prefix,
-                extension=".jpg"
-            )
-
-            return
-
-        if output_format == "JPEG":
-
-            self.save_jpeg(
-                prefix,
-                extension=".jpeg"
-            )
-
-            return
-
-        raise ValueError(
-            "Unsupported output format: "
-            f"{output_format}"
-        )
+from PIL import Image
 
 
 # ============================================================

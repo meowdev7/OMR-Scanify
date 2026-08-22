@@ -1,0 +1,8 @@
+{
+    "success": false,
+    "source": {
+        "file": "/home/dr-programmer/Projects/Python/OMR_Scanner01/Input/test.png"
+    },
+    "error": "No usable template available.",
+    "pages": []
+}

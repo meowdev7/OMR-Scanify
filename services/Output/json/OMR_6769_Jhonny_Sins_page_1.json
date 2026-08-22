@@ -1,0 +1,1121 @@
+{
+    "success": true,
+    "source": {
+        "file": "/home/dr-programmer/Projects/Python/OMR_Scanner01/Input/OMR_6769_Jhonny_Sins_page_1.png",
+        "type": "image",
+        "format": "png"
+    },
+    "sheet_id": "BIO6769",
+    "template_id": "TPL-B19788DC9982",
+    "student": {
+        "admission": "6769",
+        "name": "Jhonny Sins",
+        "class": "XI",
+        "section": "B2",
+        "subject": "Biology"
+    },
+    "page_count": 1,
+    "answers": {
+        "1": "-",
+        "2": "-",
+        "3": "-",
+        "4": "-",
+        "5": "-",
+        "6": "-",
+        "7": "-",
+        "8": "-",
+        "9": "-",
+        "10": "-",
+        "11": "-",
+        "12": "-",
+        "13": "-",
+        "14": "-",
+        "15": "-",
+        "16": "-",
+        "17": "-",
+        "18": "-",
+        "19": "-",
+        "20": "-",
+        "21": "-",
+        "22": "-",
+        "23": "-",
+        "24": "-",
+        "25": "-",
+        "26": "-",
+        "27": "-",
+        "28": "-",
+        "29": "-",
+        "30": "-",
+        "31": "-",
+        "32": "-",
+        "33": "-",
+        "34": "-",
+        "35": "-",
+        "36": "-",
+        "37": "-",
+        "38": "-",
+        "39": "-",
+        "40": "-",
+        "41": "-",
+        "42": "-",
+        "43": "-",
+        "44": "-",
+        "45": "-",
+        "46": "-",
+        "47": "-",
+        "48": "-",
+        "49": "-",
+        "50": "-",
+        "51": "-",
+        "52": "-",
+        "53": "-",
+        "54": "-",
+        "55": "-",
+        "56": "-",
+        "57": "-",
+        "58": "-",
+        "59": "-",
+        "60": "-",
+        "61": "-",
+        "62": "-",
+        "63": "-",
+        "64": "-",
+        "65": "-",
+        "66": "-",
+        "67": "-",
+        "68": "-",
+        "69": "-",
+        "70": "-",
+        "71": "-",
+        "72": "-",
+        "73": "-",
+        "74": "-",
+        "75": "-"
+    },
+    "pages": [
+        {
+            "success": true,
+            "sheet_id": "BIO6769",
+            "page": 1,
+            "pages": 1,
+            "first_question": 1,
+            "questions_on_page": 75,
+            "template_id": "TPL-B19788DC9982",
+            "template": {
+                "page_size": "A4",
+                "orientation": "Portrait",
+                "width": 2480,
+                "height": 3508,
+                "choices": "ABCD",
+                "bubble_radius": 24,
+                "bubble_spacing": 150,
+                "question_spacing": 105,
+                "column_gap": 70
+            },
+            "student": {
+                "admission": "6769",
+                "name": "Jhonny Sins",
+                "class": "XI",
+                "section": "B2",
+                "subject": "Biology"
+            },
+            "questions": [
+                {
+                    "question": 1,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 0
+                },
+                {
+                    "question": 2,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 1
+                },
+                {
+                    "question": 3,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 2
+                },
+                {
+                    "question": 4,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 3
+                },
+                {
+                    "question": 5,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 4
+                },
+                {
+                    "question": 6,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 5
+                },
+                {
+                    "question": 7,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 6
+                },
+                {
+                    "question": 8,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 7
+                },
+                {
+                    "question": 9,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 8
+                },
+                {
+                    "question": 10,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 9
+                },
+                {
+                    "question": 11,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 10
+                },
+                {
+                    "question": 12,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 11
+                },
+                {
+                    "question": 13,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 12
+                },
+                {
+                    "question": 14,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 13
+                },
+                {
+                    "question": 15,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 14
+                },
+                {
+                    "question": 16,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 15
+                },
+                {
+                    "question": 17,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 16
+                },
+                {
+                    "question": 18,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 17
+                },
+                {
+                    "question": 19,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 18
+                },
+                {
+                    "question": 20,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 19
+                },
+                {
+                    "question": 21,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 20
+                },
+                {
+                    "question": 22,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 21
+                },
+                {
+                    "question": 23,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 22
+                },
+                {
+                    "question": 24,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 23
+                },
+                {
+                    "question": 25,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 24
+                },
+                {
+                    "question": 26,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 0,
+                    "row": 25
+                },
+                {
+                    "question": 27,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 0
+                },
+                {
+                    "question": 28,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 1
+                },
+                {
+                    "question": 29,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 2
+                },
+                {
+                    "question": 30,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 3
+                },
+                {
+                    "question": 31,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 4
+                },
+                {
+                    "question": 32,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 5
+                },
+                {
+                    "question": 33,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 6
+                },
+                {
+                    "question": 34,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 7
+                },
+                {
+                    "question": 35,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 8
+                },
+                {
+                    "question": 36,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 9
+                },
+                {
+                    "question": 37,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 10
+                },
+                {
+                    "question": 38,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 11
+                },
+                {
+                    "question": 39,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 12
+                },
+                {
+                    "question": 40,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 13
+                },
+                {
+                    "question": 41,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 14
+                },
+                {
+                    "question": 42,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 15
+                },
+                {
+                    "question": 43,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 16
+                },
+                {
+                    "question": 44,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 17
+                },
+                {
+                    "question": 45,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 18
+                },
+                {
+                    "question": 46,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 19
+                },
+                {
+                    "question": 47,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 20
+                },
+                {
+                    "question": 48,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 21
+                },
+                {
+                    "question": 49,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 22
+                },
+                {
+                    "question": 50,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 23
+                },
+                {
+                    "question": 51,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 24
+                },
+                {
+                    "question": 52,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 1,
+                    "row": 25
+                },
+                {
+                    "question": 53,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 0
+                },
+                {
+                    "question": 54,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 1
+                },
+                {
+                    "question": 55,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 2
+                },
+                {
+                    "question": 56,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 3
+                },
+                {
+                    "question": 57,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 4
+                },
+                {
+                    "question": 58,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 5
+                },
+                {
+                    "question": 59,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 6
+                },
+                {
+                    "question": 60,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 7
+                },
+                {
+                    "question": 61,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 8
+                },
+                {
+                    "question": 62,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 9
+                },
+                {
+                    "question": 63,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 10
+                },
+                {
+                    "question": 64,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 11
+                },
+                {
+                    "question": 65,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 12
+                },
+                {
+                    "question": 66,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 13
+                },
+                {
+                    "question": 67,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 14
+                },
+                {
+                    "question": 68,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 15
+                },
+                {
+                    "question": 69,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 16
+                },
+                {
+                    "question": 70,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 17
+                },
+                {
+                    "question": 71,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 18
+                },
+                {
+                    "question": 72,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 19
+                },
+                {
+                    "question": 73,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 20
+                },
+                {
+                    "question": 74,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 21
+                },
+                {
+                    "question": 75,
+                    "answer": "-",
+                    "scores": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "confidence": 0.0,
+                    "column": 2,
+                    "row": 22
+                }
+            ],
+            "qr_detected": true,
+            "geometry": "canonical",
+            "geometry_points": [
+                [
+                    0.0,
+                    0.0
+                ],
+                [
+                    2479.0,
+                    0.0
+                ],
+                [
+                    2479.0,
+                    3507.0
+                ],
+                [
+                    0.0,
+                    3507.0
+                ]
+            ]
+        }
+    ]
+}
