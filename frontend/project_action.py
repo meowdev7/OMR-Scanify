@@ -13,15 +13,15 @@ BLUE = "#1769E8"
 
 def create_project_action_window(parent, project, on_back=None):
     """Show the actions available immediately after creating a project."""
-    action_window = tk.Toplevel(parent)
-    action_window.title("Project Created")
-    action_window.geometry("540x505")
-    action_window.minsize(500, 470)
-    action_window.configure(bg=BG)
-    action_window.transient(parent)
+    action_window = tk.Frame(parent, bg=BG)
 
     content = tk.Frame(action_window, bg=BG)
     content.pack(fill="both", expand=True, padx=30, pady=20)
+
+    def close_action_window():
+        action_window.pack_forget()
+        if on_back is not None:
+            on_back()
 
     back_button = tk.Button(
         content,
@@ -34,7 +34,7 @@ def create_project_action_window(parent, project, on_back=None):
         relief="flat",
         bd=0,
         cursor="hand2",
-        command=lambda: close_action_window(),
+        command=close_action_window,
     )
     back_button.pack(anchor="w")
 
@@ -70,12 +70,6 @@ def create_project_action_window(parent, project, on_back=None):
     tk.Label(tip, text="i", font=("Segoe UI", 9, "bold"), fg="#3C8BFF", bg="#0B1423").pack(side="left", padx=(11, 8))
     tk.Label(tip, text="Tip: You can always perform these actions later from the project details page.", font=("Segoe UI", 8), fg=MUTED, bg="#0B1423").pack(side="left")
 
-    def close_action_window():
-        action_window.destroy()
-        if on_back is not None:
-            on_back()
-
-    action_window.protocol("WM_DELETE_WINDOW", close_action_window)
     return action_window
 
 

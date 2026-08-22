@@ -23,11 +23,14 @@ def create_project(project_window, project_name, question_count):
 
 
 def start_scan(event=None):
-    def project_created(project):
-        projects_page.refresh_projects()
-        create_project_action_window(window, project, show_projects)
-
-    create_project_window(window, project_created)
+    preview_project = {
+        "name": "Physics Test",
+        "question_count": 50,
+    }
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    action_page = create_project_action_window(content_frame, preview_project, show_projects)
+    action_page.pack(side="left", fill="both", expand=True)
     # Later:
     # open file dialog / camera / scanning screen
 
