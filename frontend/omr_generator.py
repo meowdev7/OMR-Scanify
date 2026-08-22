@@ -28,6 +28,7 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     preview_image = {"value": None}
     generated_pages = {"value": []}
     preview_job = {"value": None}
+    current_project = {"value": project}
 
     values = {
         "page_size": tk.StringVar(value="A4"),
@@ -46,7 +47,8 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     header.pack(fill="x", padx=12, pady=(15, 9))
     tk.Button(header, text="<-  Back to Projects", command=on_back, font=("Segoe UI", 9), fg="#4A99FF", bg=BG, activeforeground="#78B3FF", activebackground=BG, relief="flat", bd=0, cursor="hand2").pack(anchor="w")
     tk.Label(header, text="OMR Generator", font=("Segoe UI", 18, "bold"), fg=TEXT, bg=BG).pack(anchor="w", pady=(6, 0))
-    tk.Label(header, text=f"Project: {project.get('name', 'Untitled Project')}  -  {project.get('question_count', 0)} Questions", font=("Segoe UI", 9), fg=MUTED, bg=BG).pack(anchor="w")
+    project_label = tk.Label(header, text="", font=("Segoe UI", 9), fg=MUTED, bg=BG)
+    project_label.pack(anchor="w")
 
     body = tk.Frame(page, bg=BG)
     body.pack(fill="both", expand=True, padx=12, pady=(0, 12))
@@ -169,6 +171,18 @@ def create_omr_generator_page(parent, project=None, on_back=None):
         if preview_job["value"] is not None:
             page.after_cancel(preview_job["value"])
         preview_job["value"] = page.after(250, generate_preview)
+
+    def set_project(next_project):
+        current_project["value"] = next_project or {"name": "Physics Test", "question_count": 50}
+        project_label.configure(
+            text=f"Project: {current_project['value'].get('name', 'Untitled Project')}  -  {current_project['value'].get('question_count', 0)} Questions"
+        )
+        values["questions"].set(str(current_project["value"].get("question_count", 50)))
+        values["subject"].set(current_project["value"].get("name", "Physics"))
+        schedule_preview()
+
+    page.set_project = set_project
+    set_project(project)
 
     for variable in values.values():
         variable.trace_add("write", schedule_preview)
