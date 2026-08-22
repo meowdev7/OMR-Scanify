@@ -1,0 +1,23 @@
+{
+    "page_size": "A4",
+    "orientation": "Portrait",
+    "questions": "50",
+    "options": "4",
+    "bubble_radius": "27",
+    "bubble_spacing": "150",
+    "question_spacing": "105",
+    "column_gap": "70",
+    "margin": "100",
+    "name": "Student",
+    "class_standard": "XII",
+    "section": "A",
+    "admission": "0000",
+    "subject": "Physics",
+    "qr_enabled": true,
+    "qr_position": "Top Right",
+    "header_name": true,
+    "header_class": true,
+    "header_section": true,
+    "header_admission": true,
+    "header_subject": true
+}

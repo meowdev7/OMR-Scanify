@@ -1,0 +1,8 @@
+{
+    "success": false,
+    "source": {
+        "file": "/home/dr-programmer/Projects/Python/OMR_Scanner01/Input/Jhonny_Sheet_1.png"
+    },
+    "error": "No usable template available.",
+    "pages": []
+}
