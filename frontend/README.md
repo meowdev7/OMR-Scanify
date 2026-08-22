@@ -1,6 +1,6 @@
 # OMR Scanify Frontend
 
-The `frontend` directory contains the Tkinter desktop interface for OMR Scanify. It provides the dashboard, project navigation, project creation dialog, and project listing. The frontend communicates with the Go backend over HTTP and reads persisted project JSON files from the user configuration directory.
+The `frontend` directory contains the Tkinter desktop interface for OMR Scanify. It provides the dashboard, project navigation, project creation dialog, project listing, project actions, and an embedded OMR generator. The frontend communicates with the Go backend over HTTP when project creation is enabled and reads persisted project JSON files from the user configuration directory.
 
 ## Features
 
@@ -10,6 +10,11 @@ The `frontend` directory contains the Tkinter desktop interface for OMR Scanify.
 - Project search and sort controls are present in the interface for future behavior.
 - Empty-project state with an illustration and create-project action.
 - Dynamic project refresh after a successful project creation.
+- Project action page shown after project creation.
+- Embedded OMR Generator page using the engine from `services/Generators/OMR_generator.py`.
+- Realtime, debounced OMR preview updates when generator settings or student details change.
+- PDF export from the frontend generator page.
+- Project-aware generator page that can be refreshed with `set_project(project)`.
 - Cross-platform asset resolution relative to the frontend source directory.
 - Dark Tkinter interface with sidebar navigation.
 
@@ -20,7 +25,9 @@ The `frontend` directory contains the Tkinter desktop interface for OMR Scanify.
 | `UI.py` | Application entry point. Creates the main window, dashboard, sidebar, and projects page, then starts Tkinter's event loop. |
 | `projects.py` | Builds the Projects page, loads project JSON files, renders project cards, and exposes `refresh_projects()`. |
 | `functions.py` | Creates the project dialog and sends project creation requests to the backend. |
-| `sidebar.py` | Builds the Dashboard and Projects navigation buttons. |
+| `project_action.py` | Builds the embedded project-created action page. |
+| `omr_generator.py` | Builds the embedded OMR Generator page, live preview, and PDF export controls. Reuses the service OMR engine. |
+| `sidebar.py` | Builds the Dashboard, Projects, and OMR Generator navigation buttons. |
 | `storage.py` | Resolves the user project directory and loads project JSON files. |
 | `assets.py` | Resolves image assets relative to the location of the Python module. |
 | `omricon.png` | Application window icon. |
@@ -37,7 +44,7 @@ The `frontend` directory contains the Tkinter desktop interface for OMR Scanify.
   - Ubuntu/Debian: install the matching `python3-tk` package.
   - Fedora: install the matching `python3-tkinter` package.
   - macOS: use a Python distribution that includes Tk support.
-- The Go backend must be running on port `8080`.
+- The Go backend must be running on port `8080` when backend project creation is enabled.
 
 ### Python packages
 
@@ -46,12 +53,14 @@ The frontend imports these third-party packages:
 ```text
 requests
 platformdirs
+Pillow
+qrcode
 ```
 
 Install them with:
 
 ```bash
-python -m pip install requests platformdirs
+python -m pip install requests platformdirs pillow qrcode
 ```
 
 The repository's root `requirements.txt` contains additional scanner and generator dependencies. Install it when working with the complete application:
@@ -64,7 +73,7 @@ If `requests` or `platformdirs` are not present in that file, install them separ
 
 ## Running the Frontend
 
-Start the backend first from the backend directory:
+Start the backend first from the backend directory when using backend project creation:
 
 ```bash
 cd backend
@@ -91,6 +100,7 @@ The sidebar is created by `create_sidebar()` in `sidebar.py`.
 
 - **Dashboard** calls `show_dashboard()` and displays the dashboard frame.
 - **Projects** calls `show_projects()` and displays the projects page.
+- **OMR Generator** calls `show_generator()` and displays the embedded generator page.
 - Hover handlers change the background color of each navigation button.
 
 ### Dashboard
@@ -120,9 +130,44 @@ The Projects page is built by `create_projects_page()` in `projects.py` and cont
 
 The search, sort, grid, and list controls are currently visual controls. Their behavior has not yet been implemented.
 
+### Project Actions
+
+The project action page is built by `create_project_action_window()` in `project_action.py`. It is an embedded frame, not a separate movable window, so it stays inside the main content area beside the sidebar. It provides navigation back to Projects and a Create OMR action.
+
+### OMR Generator
+
+The generator page is built by `create_omr_generator_page()` in `omr_generator.py`. It is also an embedded frame and reuses `OMRGenerator` from `services/Generators/OMR_generator.py` rather than the service PySimpleGUI form.
+
+The page provides:
+
+- Page size and orientation selection.
+- Question count and number of choices.
+- Student name, class, section, admission number, and subject fields.
+- QR code enable/disable control.
+- Live preview of the first generated OMR page.
+- PDF export using the existing generator engine.
+
+All controls are connected to a debounced preview refresh. Text changes regenerate after a short pause, while selection and checkbox changes also trigger the preview. The page exposes `set_project(project)` so the same frame can be reused with a different project:
+
+```python
+generator_page.set_project(project)
+```
+
+`show_generator(project=None)` in `UI.py` updates the active project and displays the generator page. This provides the integration point for passing a project returned by the Go backend.
+
 ## Creating a Project
 
 The create flow is:
+
+### Current Preview Mode
+
+Backend creation is currently temporarily disconnected in `UI.py` so the frontend screens can be edited without a running backend. Clicking the dashboard create-project card opens the project action page with the local preview project `Physics Test` and 50 questions. The sidebar generator also uses the current active preview project.
+
+To restore the backend creation flow, `start_scan()` should call `create_project_window()` and pass a callback that receives the created project, refreshes the Projects page, and calls `show_generator(project)` or opens the project action page.
+
+### Backend Creation Flow
+
+When backend creation is enabled:
 
 1. The user clicks the dashboard card, the Projects page `New Project` button, or the empty-state create button.
 2. `start_scan()` calls `create_project_window()`.
@@ -135,7 +180,7 @@ The create flow is:
    ```
 
 6. The backend returns the created project and saves it as JSON.
-7. The supplied `on_created` callback calls `projects_page.refresh_projects()`.
+7. The callback refreshes `projects_page` and passes the returned project to the project action or generator page.
 8. The dialog closes and the new project appears in the existing Projects page immediately.
 
 The current dialog uses a fixed `400x280` size and cannot be resized.
@@ -242,8 +287,10 @@ Current behavior includes:
 - A non-integer question count raises a `ValueError` during creation.
 - HTTP errors are not currently shown in a frontend dialog by the stable implementation.
 - Network failures will be raised by `requests` and printed by the Python runtime unless handled by a caller.
+- Generator validation errors leave the last valid preview visible while the user is editing an incomplete value.
+- QR and generator failures are shown in a preview error dialog.
 - Invalid or unreadable project JSON files are skipped and reported by `storage.py`.
-- If the backend is not running on port `8080`, project creation will fail.
+- If backend creation is enabled and the backend is not running on port `8080`, project creation will fail.
 
 ## Development Notes
 
@@ -251,22 +298,29 @@ Current behavior includes:
 - Keep HTTP calls short and consider moving long-running requests to a worker thread in the future so the UI does not freeze.
 - Prefer `tkinter` imports through `import tkinter as tk` in new modules to make widget ownership clear.
 - Preserve the JSON field names used by the Go model and the project cards.
+- Pass backend project objects to `show_generator(project)` or `generator_page.set_project(project)` instead of creating duplicate generator frames.
+- The OMR engine searches Windows Segoe UI and Arial font paths before Linux font paths so generated student details remain readable on Windows.
 - Keep assets inside `frontend/` unless the asset resolver is deliberately extended.
 - The `create_project()` helper defined in `UI.py` duplicates functionality in `functions.py` and is currently unused. New project creation logic should remain in `functions.py`.
-- The hover helpers at the bottom of `functions.py` reference dashboard widget names that are not defined in that module and are currently unused. They should be removed or refactored before being used.
 
 ## Basic Verification
 
 Run Python syntax checks from the repository root:
 
 ```bash
-python -m py_compile frontend/UI.py frontend/functions.py frontend/projects.py frontend/sidebar.py frontend/storage.py frontend/assets.py
+python -m py_compile frontend/UI.py frontend/functions.py frontend/projects.py frontend/project_action.py frontend/omr_generator.py frontend/sidebar.py frontend/storage.py frontend/assets.py services/Generators/OMR_generator.py
 ```
 
 Check that the required packages are available:
 
 ```bash
-python -c "import requests, platformdirs; print('Frontend dependencies are available')"
+python -c "import requests, platformdirs, PIL, qrcode; print('Frontend dependencies are available')"
 ```
 
-Run the frontend only after the backend is available at `http://127.0.0.1:8080`.
+Run the frontend with:
+
+```bash
+python frontend/UI.py
+```
+
+The current preview mode can open the UI without the backend. Start the backend at `http://127.0.0.1:8080` when reconnecting project creation or other backend operations.
