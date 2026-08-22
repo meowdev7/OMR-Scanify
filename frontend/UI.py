@@ -4,6 +4,7 @@ from sidebar import create_sidebar
 from projects import create_projects_page
 from assets import asset_path
 from project_action import create_project_action_window
+from omr_generator import create_omr_generator_page
 import requests
 
 
@@ -23,13 +24,14 @@ def create_project(project_window, project_name, question_count):
 
 
 def start_scan(event=None):
+    global action_page
     preview_project = {
         "name": "Physics Test",
         "question_count": 50,
     }
     dashboard_frame.pack_forget()
     projects_page.pack_forget()
-    action_page = create_project_action_window(content_frame, preview_project, show_projects)
+    action_page = create_project_action_window(content_frame, preview_project, show_projects, show_generator)
     action_page.pack(side="left", fill="both", expand=True)
     # Later:
     # open file dialog / camera / scanning screen
@@ -40,6 +42,7 @@ def card_enter(event=None):
 def card_leave(event=None):
     project_card.config(highlightbackground="#2A2F36")
 def show_dashboard():
+    hide_extra_pages()
     projects_page.pack_forget()
     dashboard_frame.pack(
         side="left",
@@ -49,6 +52,7 @@ def show_dashboard():
 
 
 def show_projects():
+    hide_extra_pages()
     # Hide the dashboard
     dashboard_frame.pack_forget()
 
@@ -58,6 +62,20 @@ def show_projects():
         fill="both",
         expand=True
     )
+
+
+def show_generator():
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    hide_extra_pages()
+    generator_page.pack(side="left", fill="both", expand=True)
+
+
+def hide_extra_pages():
+    if action_page is not None:
+        action_page.pack_forget()
+    if generator_page is not None:
+        generator_page.pack_forget()
 
 
 window = Tk()
@@ -70,7 +88,9 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
-sidebar = create_sidebar(window, show_dashboard, show_projects)    #created a sidebar using the create_sidebar function from sidebar.py
+action_page = None
+generator_page = None
+sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator)    #created a sidebar using the create_sidebar function from sidebar.py
 
 content_frame = Frame(window, bg="black")
 content_frame.pack(side="left", fill="both", expand=True)
@@ -79,6 +99,7 @@ dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
 projects_page = create_projects_page(content_frame, start_scan)
+generator_page = create_omr_generator_page(content_frame, on_back=start_scan)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 

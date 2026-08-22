@@ -11,7 +11,7 @@ MUTED = "#AEB7C5"
 BLUE = "#1769E8"
 
 
-def create_project_action_window(parent, project, on_back=None):
+def create_project_action_window(parent, project, on_back=None, on_create_omr=None):
     """Show the actions available immediately after creating a project."""
     action_window = tk.Frame(parent, bg=BG)
 
@@ -62,7 +62,7 @@ def create_project_action_window(parent, project, on_back=None):
     actions.grid_columnconfigure(0, weight=1)
     actions.grid_columnconfigure(1, weight=1)
 
-    _create_action_card(actions, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR")
+    _create_action_card(actions, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
     _create_action_card(actions, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key")
 
     tip = tk.Frame(content, bg="#0B1423", highlightbackground=BORDER, highlightthickness=1)
@@ -73,10 +73,10 @@ def create_project_action_window(parent, project, on_back=None):
     return action_window
 
 
-def _create_action_card(parent, column, icon, title, description, button_text):
+def _create_action_card(parent, column, icon, title, description, button_text, command=None):
     card = tk.Frame(parent, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
     card.grid(row=0, column=column, sticky="nsew", padx=(0, 7) if column == 0 else (7, 0))
     tk.Label(card, text=icon, font=("Segoe UI", 22, "bold"), fg="#DCEAFF", bg="#173B78", width=2, height=1).pack(pady=(10, 7))
     tk.Label(card, text=title, font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack()
     tk.Label(card, text=description, font=("Segoe UI", 8), fg=MUTED, bg=PANEL, justify="center").pack(pady=(4, 10))
-    tk.Button(card, text=button_text, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", activeforeground="white", relief="flat", bd=0, padx=13, pady=5, cursor="hand2").pack(pady=(0, 10))
+    tk.Button(card, text=button_text, command=command, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", activeforeground="white", relief="flat", bd=0, padx=13, pady=5, cursor="hand2").pack(pady=(0, 10))
