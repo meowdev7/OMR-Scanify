@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from PIL import ImageTk
+from functions import create_project_window
 from storage import get_project
 
 
@@ -23,25 +24,25 @@ BLUE = "#1769E8"
 INPUT = "#151E2B"
 
 
-def create_omr_generator_page(parent, project=None, on_back=None):
-    project = project or {"name": "Physics Test", "question_count": 50}
+def create_omr_generator_page(parent, project=None, on_back=None, on_project_created=None):
     page = tk.Frame(parent, bg=BG)
     preview_image = {"value": None}
     generated_pages = {"value": []}
     generated_generator = {"value": None}
     preview_job = {"value": None}
     current_project = {"value": project}
+    no_project_dialog = {"value": None}
 
     values = {
         "page_size": tk.StringVar(value="A4"),
         "orientation": tk.StringVar(value="Portrait"),
-        "questions": tk.StringVar(value=str(project.get("question_count", 50))),
+        "questions": tk.StringVar(value=str(project.get("question_count", "")) if project else ""),
         "options": tk.StringVar(value="4"),
-        "name": tk.StringVar(value="John Doe"),
-        "class_standard": tk.StringVar(value="XII"),
-        "section": tk.StringVar(value="A"),
-        "admission": tk.StringVar(value="12345"),
-        "subject": tk.StringVar(value=project.get("name", "Physics")),
+        "name": tk.StringVar(value=""),
+        "class_standard": tk.StringVar(value=""),
+        "section": tk.StringVar(value=""),
+        "admission": tk.StringVar(value=""),
+        "subject": tk.StringVar(value=project.get("name", "") if project else ""),
         "qr_enabled": tk.BooleanVar(value=True),
     }
 
@@ -116,16 +117,22 @@ def create_omr_generator_page(parent, project=None, on_back=None):
             "qr_enabled": values["qr_enabled"].get(),
             "qr_position": "Top Right",
             "output_format": "PDF",
-            "header_name": True,
-            "header_class": True,
-            "header_section": True,
-            "header_admission": True,
-            "header_subject": True,
+            "header_name": bool(values["name"].get().strip()),
+            "header_class": bool(values["class_standard"].get().strip()),
+            "header_section": bool(values["section"].get().strip()),
+            "header_admission": bool(values["admission"].get().strip()),
+            "header_subject": bool(values["subject"].get().strip()),
         }
 
     def generate_preview():
         preview_job["value"] = None
         generated_generator["value"] = None
+        if current_project["value"] is None:
+            generated_pages["value"] = []
+            image_label.configure(image="", text="Create a project to see the answer sheet preview.")
+            image_label.image = None
+            return
+
         preview_width = preview.winfo_width()
         preview_height = preview.winfo_height()
         if preview_width <= 50 or preview_height <= 50:
@@ -226,13 +233,86 @@ def create_omr_generator_page(parent, project=None, on_back=None):
         image_label.configure(image=preview_image["value"])
         image_label.image = preview_image["value"]
 
+    def show_no_project_dialog():
+        if current_project["value"] is not None or no_project_dialog["value"] is not None:
+            return
+
+        dialog = tk.Toplevel(page.winfo_toplevel())
+        no_project_dialog["value"] = dialog
+        dialog.title("No project yet")
+        dialog.configure(bg=PANEL)
+        dialog.resizable(False, False)
+        dialog.transient(page.winfo_toplevel())
+
+        tk.Label(
+            dialog,
+            text="No project yet",
+            font=("Segoe UI", 13, "bold"),
+            fg=TEXT,
+            bg=PANEL,
+        ).pack(padx=30, pady=(22, 5))
+        tk.Label(
+            dialog,
+            text="Create a new project to show the live preview.",
+            font=("Segoe UI", 9),
+            fg=MUTED,
+            bg=PANEL,
+        ).pack(padx=30, pady=(0, 16))
+
+        def create_project():
+            dialog.destroy()
+            no_project_dialog["value"] = None
+
+            def handle_created(created_project):
+                set_project(created_project)
+                if on_project_created is not None:
+                    on_project_created(created_project)
+
+            create_project_window(page.winfo_toplevel(), handle_created)
+
+        tk.Button(
+            dialog,
+            text="Create Project",
+            command=create_project,
+            font=("Segoe UI", 9, "bold"),
+            fg="white",
+            bg=BLUE,
+            activebackground="#2B7CF0",
+            relief="flat",
+            bd=0,
+            padx=16,
+            pady=7,
+            cursor="hand2",
+        ).pack(pady=(0, 20))
+
+        dialog.protocol("WM_DELETE_WINDOW", lambda: (dialog.destroy(), no_project_dialog.update(value=None)))
+        dialog.grab_set()
+        dialog.update_idletasks()
+        owner = page.winfo_toplevel()
+        x_position = owner.winfo_rootx() + (owner.winfo_width() - dialog.winfo_width()) // 2
+        y_position = owner.winfo_rooty() + (owner.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(0, x_position)}+{max(0, y_position)}")
+
     def schedule_preview(*_):
         if preview_job["value"] is not None:
             page.after_cancel(preview_job["value"])
         preview_job["value"] = page.after(250, generate_preview)
 
     def set_project(next_project):
-        selected_project = next_project or {"name": "Physics Test", "question_count": 50}
+        selected_project = next_project
+        if selected_project is None:
+            current_project["value"] = None
+            project_label.configure(text="No project selected")
+            backend_status.configure(text="Create a project to begin generating OMR sheets.")
+            values["questions"].set("")
+            values["subject"].set("")
+            generated_pages["value"] = []
+            generated_generator["value"] = None
+            image_label.configure(image="", text="Create a project to see the answer sheet preview.")
+            image_label.image = None
+            page.after_idle(show_no_project_dialog)
+            return
+
         if selected_project.get("id"):
             try:
                 selected_project = get_project(selected_project["id"])
@@ -251,8 +331,8 @@ def create_omr_generator_page(parent, project=None, on_back=None):
                 f"Results: {len(current_project['value'].get('results') or [])}"
             )
         )
-        values["questions"].set(str(current_project["value"].get("question_count", 50)))
-        values["subject"].set(current_project["value"].get("name", "Physics"))
+        values["questions"].set(str(current_project["value"].get("question_count", "")))
+        values["subject"].set(current_project["value"].get("name", ""))
         schedule_preview()
 
     page.set_project = set_project
@@ -261,7 +341,8 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     for variable in values.values():
         variable.trace_add("write", schedule_preview)
 
-    page.after(100, generate_preview)
+    if project is not None:
+        page.after(100, generate_preview)
     return page
 
 

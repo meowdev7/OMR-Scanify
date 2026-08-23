@@ -66,6 +66,12 @@ def show_generator(project=None):
     generator_page.pack(side="left", fill="both", expand=True)
 
 
+def on_generator_project_created(project):
+    global current_project
+    current_project = project
+    projects_page.refresh_projects()
+
+
 def hide_extra_pages():
     if action_page is not None:
         action_page.pack_forget()
@@ -85,7 +91,7 @@ window.iconphoto(True, icon)
 window.config(background="black")
 action_page = None
 generator_page = None
-current_project = {"name": "Physics Test", "question_count": 50}
+current_project = None
 sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator)    #created a sidebar using the create_sidebar function from sidebar.py
 
 content_frame = Frame(window, bg="black")
@@ -95,7 +101,12 @@ dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
 projects_page = create_projects_page(content_frame, start_scan, show_project_actions)
-generator_page = create_omr_generator_page(content_frame, current_project, on_back=show_projects)
+generator_page = create_omr_generator_page(
+    content_frame,
+    current_project,
+    on_back=show_projects,
+    on_project_created=on_generator_project_created,
+)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 

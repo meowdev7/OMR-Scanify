@@ -6,42 +6,7 @@ import (
 	"strings"
 )
 
-var Projects = []models.Project{
-	{
-		ID:            "PHY-001",
-		Name:          "Physics Unit Test 1",
-		QuestionCount: 8,
-		AnswerKey: []string{
-			"A",
-			"B",
-			"C",
-			"A",
-			"D",
-			"A",
-			"C",
-			"D",
-		},
-		Students: []models.Student{
-			{
-				ID:      "STU-001",
-				Name:    "Example Student",
-				Class:   "XI",
-				Section: "A1",
-				RollNo:  "17",
-				SheetID: "PHY-001-S0001",
-			},
-			{
-				ID:      "STU-002",
-				Name:    "Another Student",
-				Class:   "XI",
-				Section: "A1",
-				RollNo:  "18",
-				SheetID: "PHY-001-S0002",
-			},
-		},
-		Results: []models.Result{},
-	},
-}
+var Projects = []models.Project{}
 
 func GetProjectByID(id string) *models.Project {
 	for i := range Projects {
