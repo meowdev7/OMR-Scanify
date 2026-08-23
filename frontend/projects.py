@@ -207,7 +207,18 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
 
                     refresh_projects()
 
-                project_menu = tk.Menu(projects_page, tearoff=0)
+                project_menu = tk.Menu(
+                    projects_page,
+                    tearoff=0,
+                    bg="#11151B",
+                    fg="#E8EDF4",
+                    activebackground="#1769E8",
+                    activeforeground="#FFFFFF",
+                    disabledforeground="#68717D",
+                    borderwidth=1,
+                    relief="solid",
+                    font=("Segoe UI", 9),
+                )
                 project_menu.add_command(label="Rename", command=rename_selected)
                 project_menu.add_command(label="Delete", command=delete_selected)
 
