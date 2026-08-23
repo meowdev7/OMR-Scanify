@@ -5,37 +5,27 @@ from projects import create_projects_page
 from assets import asset_path
 from project_action import create_project_action_window
 from omr_generator import create_omr_generator_page
-import requests
-
-
-def create_project(project_window, project_name, question_count):
-    data = {
-        "name": project_name,
-        "question_count": question_count
-    }
-
-    response = requests.post(
-        "http://127.0.0.1:8080/api/v1/projects",
-        json=data
-    )
-
-    print("Backend response:", response.status_code)
-    print(response.json())
 
 
 def start_scan(event=None):
+    create_project_window(window, on_project_created)
+
+
+def on_project_created(project):
     global action_page, current_project
-    preview_project = {
-        "name": "Physics Test",
-        "question_count": 50,
-    }
-    current_project = preview_project
+    current_project = project
+    projects_page.refresh_projects()
+    show_project_actions(project)
+
+
+def show_project_actions(project):
+    global action_page, current_project
+    current_project = project
     dashboard_frame.pack_forget()
     projects_page.pack_forget()
-    action_page = create_project_action_window(content_frame, preview_project, show_projects, show_generator)
+    hide_extra_pages()
+    action_page = create_project_action_window(content_frame, project, show_projects, show_generator)
     action_page.pack(side="left", fill="both", expand=True)
-    # Later:
-    # open file dialog / camera / scanning screen
 
 def card_enter(event=None):
     project_card.config(highlightbackground="#3A3F46")
@@ -104,7 +94,7 @@ content_frame.pack(side="left", fill="both", expand=True)
 dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
-projects_page = create_projects_page(content_frame, start_scan)
+projects_page = create_projects_page(content_frame, start_scan, show_project_actions)
 generator_page = create_omr_generator_page(content_frame, current_project, on_back=show_projects)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title

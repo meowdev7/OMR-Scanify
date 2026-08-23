@@ -1,11 +1,12 @@
 import tkinter as tk
+from tkinter import messagebox
 from storage import load_projects
 from assets import asset_path
 
 pro_img = None
 
 
-def create_projects_page(window, on_create_project=None):
+def create_projects_page(window, on_create_project=None, on_select_project=None):
     global pro_img
 
     pro_img = tk.PhotoImage(file=asset_path("empty_project_img.png")).subsample(5, 5)
@@ -142,7 +143,11 @@ def create_projects_page(window, on_create_project=None):
         for child in project_list.winfo_children():
             child.destroy()
 
-        projects = load_projects()
+        try:
+            projects = load_projects()
+        except Exception as error:
+            messagebox.showerror("Projects unavailable", f"Could not load projects from the backend:\n\n{error}", parent=projects_page.winfo_toplevel())
+            projects = []
 
         if projects:
             for project in projects:
@@ -154,24 +159,31 @@ def create_projects_page(window, on_create_project=None):
                 )
                 project_card.pack(fill="x", pady=(0, 10), ipady=12)
 
-                tk.Label(
+                select_project = lambda event=None, selected=project: on_select_project(selected) if on_select_project else None
+                project_card.bind("<Button-1>", select_project)
+
+                name_label = tk.Label(
                     project_card,
                     text=project.get("name", "Untitled Project"),
                     font=("Segoe UI", 12, "bold"),
                     fg="#E8EDF4",
                     bg="#11151B"
-                ).pack(anchor="w", padx=16)
+                )
+                name_label.pack(anchor="w", padx=16)
+                name_label.bind("<Button-1>", select_project)
 
                 question_count = project.get("question_count", 0)
                 student_count = len(project.get("students") or [])
                 result_count = len(project.get("results") or [])
-                tk.Label(
+                details_label = tk.Label(
                     project_card,
                     text=f"{question_count} questions  |  {student_count} students  |  {result_count} results",
                     font=("Segoe UI", 9),
                     fg="#8B939E",
                     bg="#11151B"
-                ).pack(anchor="w", padx=16, pady=(4, 0))
+                )
+                details_label.pack(anchor="w", padx=16, pady=(4, 0))
+                details_label.bind("<Button-1>", select_project)
             return
 
         empty_state = tk.Frame(

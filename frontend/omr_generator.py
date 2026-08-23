@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from PIL import ImageTk
+from storage import get_project
 
 
 SERVICES_DIR = Path(__file__).resolve().parent.parent / "services"
@@ -49,6 +50,8 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     tk.Label(header, text="OMR Generator", font=("Segoe UI", 18, "bold"), fg=TEXT, bg=BG).pack(anchor="w", pady=(6, 0))
     project_label = tk.Label(header, text="", font=("Segoe UI", 9), fg=MUTED, bg=BG)
     project_label.pack(anchor="w")
+    backend_status = tk.Label(header, text="", font=("Segoe UI", 8), fg=MUTED, bg=BG)
+    backend_status.pack(anchor="w")
 
     body = tk.Frame(page, bg=BG)
     body.pack(fill="both", expand=True, padx=12, pady=(0, 12))
@@ -173,9 +176,24 @@ def create_omr_generator_page(parent, project=None, on_back=None):
         preview_job["value"] = page.after(250, generate_preview)
 
     def set_project(next_project):
-        current_project["value"] = next_project or {"name": "Physics Test", "question_count": 50}
+        selected_project = next_project or {"name": "Physics Test", "question_count": 50}
+        if selected_project.get("id"):
+            try:
+                selected_project = get_project(selected_project["id"])
+            except Exception as error:
+                messagebox.showerror("Project unavailable", f"Could not retrieve project data:\n\n{error}", parent=page.winfo_toplevel())
+                return
+        current_project["value"] = selected_project
         project_label.configure(
             text=f"Project: {current_project['value'].get('name', 'Untitled Project')}  -  {current_project['value'].get('question_count', 0)} Questions"
+        )
+        backend_status.configure(
+            text=(
+                f"Backend ID: {current_project['value'].get('id', 'local preview')}  |  "
+                f"Answer key: {'ready' if current_project['value'].get('answer_key') else 'not set'}  |  "
+                f"Students: {len(current_project['value'].get('students') or [])}  |  "
+                f"Results: {len(current_project['value'].get('results') or [])}"
+            )
         )
         values["questions"].set(str(current_project["value"].get("question_count", 50)))
         values["subject"].set(current_project["value"].get("name", "Physics"))

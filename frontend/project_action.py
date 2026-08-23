@@ -1,4 +1,8 @@
 import tkinter as tk
+from tkinter import filedialog, messagebox
+import csv
+import requests
+from storage import update_answer_key
 
 from assets import asset_path
 
@@ -63,7 +67,23 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     actions.grid_columnconfigure(1, weight=1)
 
     _create_action_card(actions, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
-    _create_action_card(actions, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key")
+    def upload_answer_key():
+        filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"), ("Text files", "*.txt")))
+        if not filename:
+            return
+        try:
+            with open(filename, "r", encoding="utf-8", newline="") as file:
+                rows = list(csv.reader(file))
+            answers = [cell.strip().upper() for row in rows for cell in row if cell.strip()]
+            expected = project.get("question_count", 0)
+            if len(answers) != expected:
+                raise ValueError(f"Expected {expected} answers, found {len(answers)}.")
+            update_answer_key(project["id"], answers)
+            messagebox.showinfo("Answer key uploaded", "The answer key was saved to the backend.", parent=action_window.winfo_toplevel())
+        except (OSError, ValueError, KeyError, requests.RequestException) as error:
+            messagebox.showerror("Answer key upload failed", str(error), parent=action_window.winfo_toplevel())
+
+    _create_action_card(actions, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
 
     tip = tk.Frame(content, bg="#0B1423", highlightbackground=BORDER, highlightthickness=1)
     tip.pack(fill="x", pady=(12, 0), ipady=7)

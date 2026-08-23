@@ -2,6 +2,8 @@ package main
 
 import (
 	"backend/api"
+	"backend/project"
+	"backend/storage"
 	"fmt"
 	"net/http"
 )
@@ -13,6 +15,10 @@ NOTE ->
 */
 
 func main() {
+	if projects, err := storage.LoadProjects(); err == nil && len(projects) > 0 {
+		project.Projects = projects
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/projects", api.ListProjectsHandler)

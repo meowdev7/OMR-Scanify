@@ -1,9 +1,11 @@
 from pathlib import Path
 import platformdirs
 import json
+import requests
 
 
 APP_NAME = "OMR-Scanify"
+API_URL = "http://127.0.0.1:8080/api/v1"
 
 
 def get_projects_dir():
@@ -16,17 +18,33 @@ def get_projects_dir():
 
 
 def load_projects():
-    projects_dir = get_projects_dir()
-    projects = []
+    response = requests.get(f"{API_URL}/projects", timeout=5)
+    response.raise_for_status()
+    return response.json()
 
-    for file_path in projects_dir.glob("*.json"):
-        try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                project = json.load(file)
 
-            projects.append(project)
+def get_project(project_id):
+    response = requests.get(f"{API_URL}/projects/{project_id}", timeout=5)
+    response.raise_for_status()
+    return response.json()
 
-        except (json.JSONDecodeError, OSError) as e:
-            print(f"Could not read {file_path.name}: {e}")
 
-    return projects
+def update_answer_key(project_id, answer_key):
+    response = requests.put(
+        f"{API_URL}/projects/{project_id}/answer-key",
+        json={"answer_key": answer_key},
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def import_students(project_id, csv_text):
+    response = requests.post(
+        f"{API_URL}/projects/{project_id}/students/import",
+        data=csv_text.encode("utf-8"),
+        headers={"Content-Type": "text/csv"},
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()
