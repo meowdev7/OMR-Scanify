@@ -48,3 +48,19 @@ def import_students(project_id, csv_text):
     )
     response.raise_for_status()
     return response.json()
+
+
+def rename_project(project_id, name):
+    response = requests.patch(
+        f"{API_URL}/projects/{project_id}",
+        json={"name": name},
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def delete_project(project_id):
+    response = requests.delete(f"{API_URL}/projects/{project_id}", timeout=5)
+    response.raise_for_status()
+    return response.json()

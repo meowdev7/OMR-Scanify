@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import messagebox
-from storage import load_projects
+from tkinter import messagebox, simpledialog
+from storage import delete_project, load_projects, rename_project
 from assets import asset_path
 
 pro_img = None
@@ -161,6 +161,77 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
 
                 select_project = lambda event=None, selected=project: on_select_project(selected) if on_select_project else None
                 project_card.bind("<Button-1>", select_project)
+
+                def rename_selected(selected=project):
+                    current_name = selected.get("name", "Untitled Project")
+                    new_name = simpledialog.askstring(
+                        "Rename project",
+                        "Project name:",
+                        initialvalue=current_name,
+                        parent=projects_page.winfo_toplevel(),
+                    )
+                    if new_name is None or not new_name.strip() or new_name.strip() == current_name:
+                        return
+
+                    try:
+                        rename_project(selected["id"], new_name.strip())
+                    except Exception as error:
+                        messagebox.showerror(
+                            "Rename failed",
+                            f"Could not rename the project:\n\n{error}",
+                            parent=projects_page.winfo_toplevel(),
+                        )
+                        return
+
+                    refresh_projects()
+
+                def delete_selected(selected=project):
+                    project_name = selected.get("name", "Untitled Project")
+                    confirmed = messagebox.askyesno(
+                        "Delete project",
+                        f'Delete "{project_name}"? This cannot be undone.',
+                        parent=projects_page.winfo_toplevel(),
+                    )
+                    if not confirmed:
+                        return
+
+                    try:
+                        delete_project(selected["id"])
+                    except Exception as error:
+                        messagebox.showerror(
+                            "Delete failed",
+                            f"Could not delete the project:\n\n{error}",
+                            parent=projects_page.winfo_toplevel(),
+                        )
+                        return
+
+                    refresh_projects()
+
+                project_menu = tk.Menu(projects_page, tearoff=0)
+                project_menu.add_command(label="Rename", command=rename_selected)
+                project_menu.add_command(label="Delete", command=delete_selected)
+
+                menu_button = tk.Button(
+                    project_card,
+                    text="...",
+                    font=("Segoe UI", 11, "bold"),
+                    fg="#B9C1CC",
+                    bg="#11151B",
+                    activeforeground="#FFFFFF",
+                    activebackground="#1B222C",
+                    relief="flat",
+                    bd=0,
+                    padx=8,
+                    pady=2,
+                    cursor="hand2",
+                )
+                menu_button.pack(side="right", anchor="n", padx=(0, 8), pady=(7, 0))
+                menu_button.configure(
+                    command=lambda menu=project_menu, button=menu_button: menu.tk_popup(
+                        button.winfo_rootx(),
+                        button.winfo_rooty() + button.winfo_height(),
+                    )
+                )
 
                 name_label = tk.Label(
                     project_card,

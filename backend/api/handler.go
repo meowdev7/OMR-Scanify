@@ -215,6 +215,61 @@ func GetProjectHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Retrieved project: %+v\n", p)
 }
 
+// RenameProjectHandler handles PATCH /api/v1/projects/{id}
+
+func RenameProjectHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Name) == "" {
+		writeJSONError(w, http.StatusBadRequest, "Invalid project name")
+		return
+	}
+
+	p := project.RenameProject(id, req.Name)
+	if p == nil {
+		writeJSONError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to save project")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, p)
+}
+
+// DeleteProjectHandler handles DELETE /api/v1/projects/{id}
+
+func DeleteProjectHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
+		return
+	}
+
+	deleted := project.DeleteProject(id)
+	if deleted == nil {
+		writeJSONError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	if err := storage.DeleteProject(id); err != nil {
+		project.Projects = append(project.Projects, *deleted)
+		writeJSONError(w, http.StatusInternalServerError, "Failed to delete project")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "project deleted"})
+}
+
 // UpdateAnswerKeyHandler handles PUT /api/v1/projects/{id}/answer-key
 
 func UpdateAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {

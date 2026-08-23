@@ -25,6 +25,8 @@ func main() {
 	mux.HandleFunc("POST /api/v1/projects", api.CreateProjectHandler)
 
 	mux.HandleFunc("GET /api/v1/projects/{id}", api.GetProjectHandler)
+	mux.HandleFunc("PATCH /api/v1/projects/{id}", api.RenameProjectHandler)
+	mux.HandleFunc("DELETE /api/v1/projects/{id}", api.DeleteProjectHandler)
 	mux.HandleFunc("PUT /api/v1/projects/{id}/answer-key", api.UpdateAnswerKeyHandler)
 	mux.HandleFunc("POST /api/v1/projects/{id}/students/import", api.ImportStudentsHandler)
 	mux.HandleFunc("POST /api/v1/projects/{id}/submissions", api.SubmissionHandler)

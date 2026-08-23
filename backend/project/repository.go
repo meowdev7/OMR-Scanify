@@ -78,6 +78,30 @@ func CreateProject(name string, questionCount int) *models.Project {
 	return &Projects[len(Projects)-1]
 }
 
+func RenameProject(id string, name string) *models.Project {
+	p := GetProjectByID(id)
+	if p == nil {
+		return nil
+	}
+
+	p.Name = strings.TrimSpace(name)
+	return p
+}
+
+func DeleteProject(id string) *models.Project {
+	for i := range Projects {
+		if Projects[i].ID != id {
+			continue
+		}
+
+		deleted := Projects[i]
+		Projects = append(Projects[:i], Projects[i+1:]...)
+		return &deleted
+	}
+
+	return nil
+}
+
 func AddResultToProject(p *models.Project, r models.Result) {
 	for i := range p.Results {
 		if p.Results[i].SheetID == r.SheetID {

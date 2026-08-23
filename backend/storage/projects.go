@@ -55,6 +55,19 @@ func SaveProjects(projects []models.Project) error {
 	return nil
 }
 
+func DeleteProject(id string) error {
+	filePath, err := projectFilePath(id)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete project %s: %w", id, err)
+	}
+
+	return nil
+}
+
 func LoadProjects() ([]models.Project, error) {
 	dir, err := projectsDirPath()
 	if err != nil {
