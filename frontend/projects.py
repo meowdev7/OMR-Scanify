@@ -1,9 +1,21 @@
 import tkinter as tk
+from datetime import datetime
 from tkinter import messagebox, simpledialog
 from storage import delete_project, load_projects, rename_project
 from assets import asset_path
 
 pro_img = None
+
+
+def format_created_date(value):
+    if not value:
+        return "Created date unavailable"
+
+    try:
+        created_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return f"Created {created_at.strftime('%d %b %Y')}"
+    except (TypeError, ValueError):
+        return "Created date unavailable"
 
 
 def create_projects_page(window, on_create_project=None, on_select_project=None):
@@ -257,9 +269,10 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
                 question_count = project.get("question_count", 0)
                 student_count = len(project.get("students") or [])
                 result_count = len(project.get("results") or [])
+                created_date = format_created_date(project.get("created_at"))
                 details_label = tk.Label(
                     project_card,
-                    text=f"{question_count} questions  |  {student_count} students  |  {result_count} results",
+                    text=f"{question_count} questions  |  {student_count} students  |  {result_count} results  |  {created_date}",
                     font=("Segoe UI", 9),
                     fg="#8B939E",
                     bg="#11151B"

@@ -4,6 +4,7 @@ import (
 	"backend/models"
 	"fmt"
 	"strings"
+	"time"
 )
 
 var Projects = []models.Project{}
@@ -32,6 +33,7 @@ func CreateProject(name string, questionCount int) *models.Project {
 	p := models.Project{
 		ID:            id,
 		Name:          name,
+		CreatedAt:     time.Now(),
 		QuestionCount: questionCount,
 		AnswerKey:     []string{},
 		Students:      []models.Student{},
