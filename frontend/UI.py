@@ -64,6 +64,8 @@ def show_generator(project=None):
     hide_extra_pages()
     generator_page.set_project(current_project)
     generator_page.pack(side="left", fill="both", expand=True)
+    if current_project is None:
+        generator_page.show_no_project_dialog()
 
 
 def on_generator_project_created(project):

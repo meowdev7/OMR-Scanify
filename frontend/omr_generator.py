@@ -237,12 +237,14 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         if current_project["value"] is not None or no_project_dialog["value"] is not None:
             return
 
-        dialog = tk.Toplevel(page.winfo_toplevel())
+        owner = page.winfo_toplevel()
+        owner.update_idletasks()
+        dialog = tk.Toplevel(owner)
         no_project_dialog["value"] = dialog
         dialog.title("No project yet")
         dialog.configure(bg=PANEL)
         dialog.resizable(False, False)
-        dialog.transient(page.winfo_toplevel())
+        dialog.transient(owner)
 
         tk.Label(
             dialog,
@@ -288,7 +290,6 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         dialog.protocol("WM_DELETE_WINDOW", lambda: (dialog.destroy(), no_project_dialog.update(value=None)))
         dialog.grab_set()
         dialog.update_idletasks()
-        owner = page.winfo_toplevel()
         x_position = owner.winfo_rootx() + (owner.winfo_width() - dialog.winfo_width()) // 2
         y_position = owner.winfo_rooty() + (owner.winfo_height() - dialog.winfo_height()) // 2
         dialog.geometry(f"+{max(0, x_position)}+{max(0, y_position)}")
@@ -310,7 +311,6 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             generated_generator["value"] = None
             image_label.configure(image="", text="Create a project to see the answer sheet preview.")
             image_label.image = None
-            page.after_idle(show_no_project_dialog)
             return
 
         if selected_project.get("id"):
@@ -336,6 +336,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         schedule_preview()
 
     page.set_project = set_project
+    page.show_no_project_dialog = show_no_project_dialog
     set_project(project)
 
     for variable in values.values():
