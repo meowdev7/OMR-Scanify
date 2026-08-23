@@ -28,6 +28,7 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     page = tk.Frame(parent, bg=BG)
     preview_image = {"value": None}
     generated_pages = {"value": []}
+    generated_generator = {"value": None}
     preview_job = {"value": None}
     current_project = {"value": project}
 
@@ -80,9 +81,8 @@ def create_omr_generator_page(parent, project=None, on_back=None):
     _entry_grid_row(student_grid, "Subject", values["subject"], 3, 0, column_span=2)
     tk.Checkbutton(settings, text="Include QR code", variable=values["qr_enabled"], fg=MUTED, bg=PANEL, activebackground=PANEL, activeforeground=TEXT, selectcolor=INPUT).pack(anchor="w", padx=9, pady=(2, 2))
 
-    generate_button = tk.Button(settings, text="↻  Generate / Update Preview", command=lambda: generate_preview(), font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, pady=7, cursor="hand2")
+    generate_button = tk.Button(settings, text="Generate OMR", command=lambda: generate_omr(), font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, pady=7, cursor="hand2")
     generate_button.pack(fill="x", padx=12, pady=(3, 5))
-    tk.Button(settings, text="↓  Save OMR as PDF", command=lambda: save_pdf(), font=("Segoe UI", 9), fg=TEXT, bg=INPUT, activebackground="#202D3E", relief="flat", bd=0, pady=5, cursor="hand2").pack(fill="x", padx=12)
 
     tk.Label(preview, text="Live Preview", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=12, pady=(12, 4))
     image_label = tk.Label(preview, text="Generate a preview to see the answer sheet.", font=("Segoe UI", 10), fg=MUTED, bg=PANEL)
@@ -125,6 +125,7 @@ def create_omr_generator_page(parent, project=None, on_back=None):
 
     def generate_preview():
         preview_job["value"] = None
+        generated_generator["value"] = None
         preview_width = preview.winfo_width()
         preview_height = preview.winfo_height()
         if preview_width <= 50 or preview_height <= 50:
@@ -134,6 +135,7 @@ def create_omr_generator_page(parent, project=None, on_back=None):
         try:
             generator = OMRGenerator(make_config())
             generated_pages["value"] = generator.generate()
+            generated_generator["value"] = generator
             page_image = generated_pages["value"][0].copy()
             page_image.thumbnail((max(1, image_label.winfo_width() - 20), max(1, image_label.winfo_height() - 20)))
             preview_image["value"] = ImageTk.PhotoImage(page_image)
@@ -148,6 +150,72 @@ def create_omr_generator_page(parent, project=None, on_back=None):
             generated_pages["value"] = []
             messagebox.showerror("Preview failed", f"Could not generate the OMR preview:\n\n{error}", parent=page.winfo_toplevel())
 
+    def generate_omr():
+        generate_preview()
+        if generated_generator["value"] is not None:
+            show_format_dialog()
+
+    def show_format_dialog():
+        owner = page.winfo_toplevel()
+        dialog = tk.Toplevel(owner)
+        dialog.title("Save OMR")
+        dialog.configure(bg=PANEL)
+        dialog.resizable(False, False)
+        dialog.transient(owner)
+
+        tk.Label(dialog, text="Choose OMR format", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=PANEL).pack(padx=22, pady=(16, 10))
+        options = tk.Frame(dialog, bg=PANEL)
+        options.pack(padx=14, pady=(0, 16))
+        for output_format in ("PNG", "JPEG", "PDF"):
+            tk.Button(
+                options,
+                text=output_format,
+                command=lambda selected_format=output_format: export_omr(dialog, selected_format),
+                font=("Segoe UI", 9, "bold"),
+                fg=TEXT,
+                bg=INPUT,
+                activebackground="#202D3E",
+                relief="flat",
+                bd=0,
+                padx=12,
+                pady=5,
+                cursor="hand2",
+            ).pack(side="left", padx=4)
+
+            owner.update_idletasks()
+            dialog.update_idletasks()
+            x_position = owner.winfo_rootx() + (owner.winfo_width() - dialog.winfo_width()) // 2
+            y_position = owner.winfo_rooty() + (owner.winfo_height() - dialog.winfo_height()) // 2
+            dialog.geometry(f"+{max(0, x_position)}+{max(0, y_position)}")
+            dialog.grab_set()
+
+    def export_omr(dialog, output_format):
+        dialog.destroy()
+        generator = generated_generator["value"]
+        if generator is None:
+            return
+
+        extension = output_format.lower()
+        filename = filedialog.asksaveasfilename(
+            parent=page.winfo_toplevel(),
+            title=f"Save OMR as {output_format}",
+            defaultextension=f".{extension}",
+            filetypes=((f"{output_format} files", f"*.{extension}"),),
+        )
+        if not filename:
+            return
+
+        try:
+            if output_format == "PDF":
+                generator.save_pdf(filename)
+            elif output_format == "JPEG":
+                generator.save_jpeg(str(Path(filename).with_suffix("")), extension=".jpeg")
+            else:
+                generator.save_png(str(Path(filename).with_suffix("")))
+            messagebox.showinfo("OMR saved", f"The OMR {output_format} was saved successfully.", parent=page.winfo_toplevel())
+        except Exception as error:
+            messagebox.showerror("Export failed", f"Could not save the OMR:\n\n{error}", parent=page.winfo_toplevel())
+
     def refresh_preview():
         pages = generated_pages["value"]
         if not pages or image_label.winfo_width() <= 1:
@@ -157,18 +225,6 @@ def create_omr_generator_page(parent, project=None, on_back=None):
         preview_image["value"] = ImageTk.PhotoImage(page_image)
         image_label.configure(image=preview_image["value"])
         image_label.image = preview_image["value"]
-
-    def save_pdf():
-        if not generated_pages["value"]:
-            generate_preview()
-        if not generated_pages["value"]:
-            return
-        filename = filedialog.asksaveasfilename(parent=page.winfo_toplevel(), defaultextension=".pdf", filetypes=(("PDF files", "*.pdf"),))
-        if filename:
-            generator = OMRGenerator(make_config())
-            generator.generate()
-            generator.save_pdf(filename)
-            messagebox.showinfo("OMR saved", "The OMR PDF was saved successfully.", parent=page.winfo_toplevel())
 
     def schedule_preview(*_):
         if preview_job["value"] is not None:
