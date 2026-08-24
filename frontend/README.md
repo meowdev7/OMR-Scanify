@@ -21,8 +21,9 @@ The frontend is a cross-platform desktop application built with Tkinter that ena
 - **Backend Integration**: Full integration with the Go backend API for project lifecycle management
 - **Enhanced Project Management**: Project deletion and renaming capabilities in the projects list view
 - **API-Driven Data Flow**: All project data flows through the REST API, ensuring consistency across components
-- **Sidebar Navigation**: Added dedicated navigation sidebar for Dashboard, Projects, and OMR Generator views
-- **Dark Theme UI**: Modern dark theme throughout the interface for better usability
+- **Sidebar Navigation**: Added dedicated navigation sidebar for Dashboard, Projects, OMR Generator, and bottom-positioned Settings views
+- **Theme Settings**: Added Dark, Light, and System appearance modes with immediate UI updates
+- **Centralized Theme Application**: Shared palette and widget styling logic keeps the interface consistent across pages and dialogs
 
 ## Features
 
@@ -42,7 +43,10 @@ The frontend is a cross-platform desktop application built with Tkinter that ena
 - **PDF Export**: Generate and download OMR sheets as PDF from the frontend.
 - **Project-Aware Generator**: OMR generator page maintains state per project and can be refreshed with project updates.
 - **Cross-Platform Asset Resolution**: Image assets resolved relative to the frontend source directory, works across Windows, Linux, and macOS.
-- **Dark Tkinter Interface**: Consistent dark theme with sidebar navigation.
+- **Theme Selection**: Choose Dark, Light, or System mode from Settings. The selected mode is applied immediately to the main window, sidebar, pages, dialogs, and controls.
+- **Dark and Light Palettes**: Centralized window, sidebar, panel, border, text, muted, accent, and hover colors are defined in `theme.py`.
+- **System Theme Detection**: System mode reads the Windows application theme preference and falls back to Dark when it cannot be detected.
+- **Hover Feedback**: Action buttons show the blue accent only while the pointer is over them and restore their surrounding background when the pointer leaves.
 - **Project Deletion & Renaming**: Right-click context menu on project cards for management actions.
 
 ## API Documentation
@@ -258,7 +262,9 @@ Response (200):
 | `functions.py` | Handles project creation workflow. Creates and manages the project creation dialog (modal window), validates user input, sends project data to backend, shows success/error messages, and invokes the callback on successful creation. |
 | `project_action.py` | Builds the project action/workflow page shown after successful project creation. Displays success message and provides quick-action buttons to guide users to next steps: import students, set answer key, or generate OMR sheets. |
 | `omr_generator.py` | Builds the embedded OMR Generator page with live preview. Manages generator state (page size, orientation, questions, options, student details, QR settings). Handles real-time preview generation with debouncing, PDF export, and project context awareness. |
-| `sidebar.py` | Builds the left-side navigation sidebar with OMR Scanify branding and navigation buttons (Dashboard, Projects, OMR Generator). Manages button states and coordinates view switching via callbacks. |
+| `sidebar.py` | Builds the left-side navigation sidebar with OMR Scanify branding and navigation buttons. Settings is packed at the bottom of the sidebar, while Dashboard, Projects, and OMR Generator remain in the main navigation area. |
+| `settings.py` | Builds the Settings page. Provides Dark, Light, and System appearance choices, updates the selected state, and requests an application-wide theme refresh. |
+| `theme.py` | Defines Dark and Light palettes, detects the Windows system theme, resolves the selected mode, translates legacy widget colors, and applies colors and hover behavior recursively to the interface. |
 | `storage.py` | API communication layer for all backend interactions. Encapsulates all HTTP requests to the Go backend for projects, students, answer keys, and results. Handles configuration directory resolution using `platformdirs`. |
 | `assets.py` | Resolves image asset paths relative to the Python module location using `Path(__file__).resolve()`. Ensures cross-platform asset loading (Windows, Linux, macOS) independent of working directory. |
 | `omricon.png` | Application window icon (appears in taskbar and window title bar). |
@@ -332,7 +338,20 @@ The sidebar is created by `create_sidebar()` in `sidebar.py`.
 - **Dashboard** calls `show_dashboard()` and displays the dashboard frame.
 - **Projects** calls `show_projects()` and displays the projects page.
 - **OMR Generator** calls `show_generator()` and displays the embedded generator page.
+- **Settings** calls `show_settings()` and is anchored to the bottom of the sidebar.
 - Hover handlers change the background color of each navigation button.
+
+### Settings and Themes
+
+The Settings page is created by `create_settings_page()` in `settings.py`. Its Appearance section provides three modes:
+
+- **Dark**: Uses the dark application palette.
+- **Light**: Uses the light application palette.
+- **System**: Detects the operating system theme. On Windows, this reads `AppsUseLightTheme` from the user theme settings.
+
+Selecting a mode immediately updates the main window, sidebar, dashboard, project pages, generator, settings page, and dialogs through `apply_theme()` in `theme.py`. Action buttons use the blue accent while hovered and return to the background of their surrounding container when the pointer leaves.
+
+The selected mode currently exists only for the active application session. It resets to Dark when `UI.py` starts; the Go backend does not store frontend appearance preferences.
 
 ### Dashboard
 
@@ -632,6 +651,7 @@ State is primarily managed through:
 - **Project Object**: Passed between pages via function parameters
 - **Dictionary Caching**: `omr_generator.py` maintains generator state in Tkinter `StringVar`/`BooleanVar` objects
 - **Global Variables**: `UI.py` maintains `current_project` and page references as globals
+- **Theme State**: `UI.py` maintains the selected `theme_mode` for the active session and passes it to pages and dialogs through the window theme state
 - **API Responses**: Backend project data is the source of truth; frontend caches it locally
 
 Debouncing is implemented in `omr_generator.py` to batch rapid preview updates and reduce backend load:
@@ -667,6 +687,19 @@ projects_dir = config_dir / APP_NAME / "projects"
 On **Windows**: `%APPDATA%\OMR-Scanify\projects`
 On **Linux**: `~/.config/omr-scanify/projects` (or `$XDG_CONFIG_HOME/...` if set)
 On **macOS**: `~/Library/Application Support/OMR-Scanify/projects`
+
+### Theme Configuration
+
+Theme palettes and theme application behavior are defined in `theme.py`:
+
+```python
+PALETTES = {
+  "dark": {...},
+  "light": {...},
+}
+```
+
+The initial frontend mode is set in `UI.py` with `theme_mode = "dark"`. Change the default there only if a different startup mode is required. The `system` mode is resolved at runtime and does not modify the operating system theme.
 
 ### Font Configuration
 
@@ -744,9 +777,13 @@ To adjust, edit the `timeout` parameter in `storage.py` or `functions.py`.
 - **Solution**: Check that you're not running the frontend from a different directory (assets are relative to module location)
 - **Solution**: On Linux, ensure PIL/Pillow can render PNG: `sudo apt-get install libpng-dev`
 
-**Problem**: Dark theme colors look wrong or inverted
-- **Solution**: Tkinter respects system theme. Try adjusting your OS theme settings.
-- **Solution**: Edit color hex values in the relevant page-building functions (e.g., `BG = "#080D17"`)
+**Problem**: Theme colors look wrong or inverted
+- **Solution**: Open Settings and select Dark or Light to compare the two palettes.
+- **Solution**: For System mode on Windows, verify the Windows application theme preference.
+- **Solution**: Edit the centralized palette values in `theme.py` if custom colors are required.
+
+**Problem**: The selected theme resets after restarting the frontend
+- **Solution**: This is currently expected. Theme selection is stored in memory only and is not persisted by the frontend or backend.
 
 ### API & Network Issues
 
@@ -794,6 +831,6 @@ To adjust, edit the `timeout` parameter in `storage.py` or `functions.py`.
 - Project settings editor (edit project name, question count after creation)
 - Results viewer with detailed scoring breakdowns
 - Project templates for common use cases
-- Theme customization and light mode
+- Persist the selected theme mode between application launches
 - Keyboard shortcuts and accessibility improvements
 - Progress indicators for long-running operations
