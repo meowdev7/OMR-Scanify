@@ -18,6 +18,14 @@ def format_created_date(value):
         return "Created date unavailable"
 
 
+def project_created_timestamp(project):
+    try:
+        created_at = datetime.fromisoformat(project.get("created_at", "").replace("Z", "+00:00"))
+        return created_at.timestamp()
+    except (AttributeError, TypeError, ValueError, OSError):
+        return float("-inf")
+
+
 def create_projects_page(window, on_create_project=None, on_select_project=None):
     global pro_img
 
@@ -92,9 +100,11 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
         bd=0
     ).pack(side="left", fill="x", expand=True, ipady=7, padx=(0, 10))
 
-    sort_button = tk.Button(
+    sort_choice = tk.StringVar(value="Recent")
+    sort_label = tk.StringVar(value="Sort by: Recent")
+    sort_button = tk.Menubutton(
         toolbar,
-        text="Sort by: Recent  v",
+        textvariable=sort_label,
         font=("Segoe UI", 9),
         fg="#B9C1CC",
         bg="#0D1116",
@@ -108,6 +118,16 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
         pady=7,
         cursor="hand2"
     )
+    sort_menu = tk.Menu(
+        sort_button,
+        tearoff=False,
+        bg="#11151B",
+        fg="#E8EDF4",
+        activebackground="#1769E8",
+        activeforeground="#FFFFFF",
+        borderwidth=0,
+    )
+    sort_button.configure(menu=sort_menu)
     sort_button.pack(side="left")
 
     tk.Button(
@@ -160,6 +180,14 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
         except Exception as error:
             messagebox.showerror("Projects unavailable", f"Could not load projects from the backend:\n\n{error}", parent=projects_page.winfo_toplevel())
             projects = []
+
+        selected_sort = sort_choice.get()
+        if selected_sort == "Alphabetical":
+            projects.sort(key=lambda project: str(project.get("name", "")).casefold())
+        elif selected_sort == "Oldest":
+            projects.sort(key=project_created_timestamp)
+        else:
+            projects.sort(key=project_created_timestamp, reverse=True)
 
         if projects:
             for project in projects:
@@ -329,6 +357,18 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
         ).pack(pady=(13, 0))
 
     projects_page.refresh_projects = refresh_projects
+
+    def select_sort(selected_sort):
+        sort_choice.set(selected_sort)
+        sort_label.set(f"Sort by: {selected_sort}")
+        refresh_projects()
+
+    for sort_name in ("Recent", "Oldest", "Alphabetical"):
+        sort_menu.add_command(
+            label=sort_name,
+            command=lambda selected_sort=sort_name: select_sort(selected_sort),
+        )
+
     refresh_projects()
 
     info = tk.Frame(projects_page, bg="#0B1423")
