@@ -6,6 +6,7 @@ from tkinter import filedialog, messagebox
 from PIL import ImageTk
 from functions import create_project_window
 from storage import get_project
+from theme import apply_theme
 
 
 SERVICES_DIR = Path(__file__).resolve().parent.parent / "services"
@@ -189,12 +190,13 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
                 cursor="hand2",
             ).pack(side="left", padx=4)
 
-            owner.update_idletasks()
-            dialog.update_idletasks()
-            x_position = owner.winfo_rootx() + (owner.winfo_width() - dialog.winfo_width()) // 2
-            y_position = owner.winfo_rooty() + (owner.winfo_height() - dialog.winfo_height()) // 2
-            dialog.geometry(f"+{max(0, x_position)}+{max(0, y_position)}")
-            dialog.grab_set()
+        apply_theme(dialog, getattr(owner, "_theme_mode", "dark"))
+        owner.update_idletasks()
+        dialog.update_idletasks()
+        x_position = owner.winfo_rootx() + (owner.winfo_width() - dialog.winfo_width()) // 2
+        y_position = owner.winfo_rooty() + (owner.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{max(0, x_position)}+{max(0, y_position)}")
+        dialog.grab_set()
 
     def export_omr(dialog, output_format):
         dialog.destroy()
@@ -270,7 +272,8 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
                 if on_project_created is not None:
                     on_project_created(created_project)
 
-            create_project_window(page.winfo_toplevel(), handle_created)
+            project_dialog = create_project_window(page.winfo_toplevel(), handle_created)
+            apply_theme(project_dialog, getattr(owner, "_theme_mode", "dark"))
 
         tk.Button(
             dialog,
@@ -287,6 +290,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             cursor="hand2",
         ).pack(pady=(0, 20))
 
+        apply_theme(dialog, getattr(owner, "_theme_mode", "dark"))
         dialog.protocol("WM_DELETE_WINDOW", lambda: (dialog.destroy(), no_project_dialog.update(value=None)))
         dialog.grab_set()
         dialog.update_idletasks()
@@ -360,4 +364,7 @@ def _entry_grid_row(parent, label, variable, row, column, column_span=1):
 
 def _select_row(parent, label, variable, options):
     tk.Label(parent, text=label, font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(1, 1))
-    tk.OptionMenu(parent, variable, *options).pack(fill="x", padx=12, pady=(0, 2))
+    option_menu = tk.OptionMenu(parent, variable, *options)
+    option_menu.configure(fg=TEXT, bg=INPUT, activeforeground=TEXT, activebackground="#202D3E", highlightbackground=BORDER, highlightthickness=1, relief="flat")
+    option_menu.pack(fill="x", padx=12, pady=(0, 2))
+    option_menu["menu"].configure(bg=INPUT, fg=TEXT, activebackground=BLUE, activeforeground=TEXT)

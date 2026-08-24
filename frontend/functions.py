@@ -111,6 +111,12 @@ def create_project_window(parent, on_created=None):
     project_window,
     text="Create",
     font=("Segoe UI", 11, "bold"),
+    fg="#FFFFFF",
+    bg="#1769E8",
+    activeforeground="#FFFFFF",
+    activebackground="#2B7CF0",
+    relief="flat",
+    bd=0,
     command=lambda: create_project(
         project_window,
         project_name.get(),
@@ -123,5 +129,7 @@ def create_project_window(parent, on_created=None):
     # Keep dialog above main window
     project_window.transient(parent)
     project_name.focus()
+
+    return project_window
 
     

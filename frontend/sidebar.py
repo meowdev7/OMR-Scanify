@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-def create_sidebar(window, show_dashboard, show_projects, show_generator=None):
+def create_sidebar(window, show_dashboard, show_projects, show_generator=None, show_settings=None):
 
     # Main sidebar
     sidebar = tk.Frame(
@@ -58,16 +58,6 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None):
             pady=1
         )
 
-        # Hover effect
-        def on_enter(event):
-            button.config(bg="#1C2128")
-
-        def on_leave(event):
-            button.config(bg="#111418")
-
-        button.bind("<Enter>", on_enter)
-        button.bind("<Leave>", on_leave)
-
         return button
 
     # Dashboard navigation
@@ -78,5 +68,8 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None):
 
     if show_generator is not None:
         create_nav_button("OMR Generator", show_generator)
+
+    if show_settings is not None:
+        create_nav_button("Settings", show_settings)
 
     return sidebar

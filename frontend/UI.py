@@ -5,10 +5,13 @@ from projects import create_projects_page
 from assets import asset_path
 from project_action import create_project_action_window
 from omr_generator import create_omr_generator_page
+from settings import create_settings_page
+from theme import PALETTES, apply_theme, resolve_theme
 
 
 def start_scan(event=None):
-    create_project_window(window, on_project_created)
+    dialog = create_project_window(window, on_project_created)
+    apply_theme(dialog, theme_mode)
 
 
 def on_project_created(project):
@@ -23,29 +26,34 @@ def show_project_actions(project):
     current_project = project
     dashboard_frame.pack_forget()
     projects_page.pack_forget()
+    settings_page.pack_forget()
     hide_extra_pages()
     action_page = create_project_action_window(content_frame, project, show_projects, show_generator)
     action_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
 
 def card_enter(event=None):
-    project_card.config(highlightbackground="#3A3F46")
+    project_card.config(highlightbackground=PALETTES[resolve_theme(theme_mode)]["blue"])
 
 def card_leave(event=None):
-    project_card.config(highlightbackground="#2A2F36")
+    project_card.config(highlightbackground=PALETTES[resolve_theme(theme_mode)]["border"])
 def show_dashboard():
     hide_extra_pages()
     projects_page.pack_forget()
+    settings_page.pack_forget()
     dashboard_frame.pack(
         side="left",
         fill="both",
         expand=True
     )
+    apply_theme(window, theme_mode)
 
 
 def show_projects():
     hide_extra_pages()
     # Hide the dashboard
     dashboard_frame.pack_forget()
+    settings_page.pack_forget()
 
     # Show the Projects page
     projects_page.pack(
@@ -53,6 +61,22 @@ def show_projects():
         fill="both",
         expand=True
     )
+    apply_theme(window, theme_mode)
+
+
+def show_settings():
+    hide_extra_pages()
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    settings_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
+
+
+def on_theme_changed(mode):
+    global theme_mode
+    theme_mode = mode
+    window._theme_mode = mode
+    apply_theme(window, theme_mode)
 
 
 def show_generator(project=None):
@@ -61,9 +85,11 @@ def show_generator(project=None):
         current_project = project
     dashboard_frame.pack_forget()
     projects_page.pack_forget()
+    settings_page.pack_forget()
     hide_extra_pages()
     generator_page.set_project(current_project)
     generator_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
     if current_project is None:
         generator_page.show_no_project_dialog()
 
@@ -91,10 +117,12 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
+theme_mode = "dark"
+window._theme_mode = theme_mode
 action_page = None
 generator_page = None
 current_project = None
-sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator)    #created a sidebar using the create_sidebar function from sidebar.py
+sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator, show_settings)
 
 content_frame = Frame(window, bg="black")
 content_frame.pack(side="left", fill="both", expand=True)
@@ -109,6 +137,7 @@ generator_page = create_omr_generator_page(
     on_back=show_projects,
     on_project_created=on_generator_project_created,
 )
+settings_page = create_settings_page(content_frame, theme_mode, on_theme_changed)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 
@@ -194,6 +223,7 @@ card_subtitle.bind("<Leave>", card_leave)
 card_image_label.bind("<Enter>", card_enter)
 card_image_label.bind("<Leave>", card_leave)
 
+apply_theme(window, theme_mode)
 
 
 
