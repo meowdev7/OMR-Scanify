@@ -34,7 +34,7 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None, s
     # Navigation button function
     # -------------------------
 
-    def create_nav_button(text,command):
+    def create_nav_button(text, command, side="top"):
 
         button = tk.Button(
             sidebar,
@@ -53,6 +53,7 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None, s
         )
 
         button.pack(
+            side=side,
             fill="x",
             ipady=7,
             pady=1
@@ -70,6 +71,6 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None, s
         create_nav_button("OMR Generator", show_generator)
 
     if show_settings is not None:
-        create_nav_button("Settings", show_settings)
+        create_nav_button("Settings", show_settings, side="bottom")
 
     return sidebar
