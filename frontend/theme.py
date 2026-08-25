@@ -48,7 +48,7 @@ def apply_theme(widget, mode):
                 child.configure(**config)
             if isinstance(child, (tk.Button, tk.Menubutton)):
                 text = str(child.cget("text")).lower()
-                is_action = any(label in text for label in ("create", "new project", "generate omr"))
+                is_action = any(label in text for label in ("create", "new project", "generate omr", "upload answer key"))
                 base_background = _replace_color(child.master.cget("bg"), palette, "bg") if is_action else _replace_color(child.cget("bg"), palette, "bg")
                 hover_background = palette["blue"] if is_action else palette["hover"]
                 child._theme_base_background = base_background

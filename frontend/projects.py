@@ -13,6 +13,8 @@ def format_created_date(value):
 
     try:
         created_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if created_at.year == 1:
+            return "Created date unavailable"
         return f"Created {created_at.strftime('%d %b %Y')}"
     except (TypeError, ValueError):
         return "Created date unavailable"

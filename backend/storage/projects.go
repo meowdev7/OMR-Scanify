@@ -80,6 +80,7 @@ func LoadProjects() ([]models.Project, error) {
 	}
 
 	projects := make([]models.Project, 0)
+	repairedTimestamp := false
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -111,7 +112,22 @@ func LoadProjects() ([]models.Project, error) {
 			)
 		}
 
+		if project.CreatedAt.IsZero() {
+			fileInfo, err := os.Stat(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to inspect project file %s: %w", entry.Name(), err)
+			}
+			project.CreatedAt = fileInfo.ModTime()
+			repairedTimestamp = true
+		}
+
 		projects = append(projects, project)
+	}
+
+	if repairedTimestamp {
+		if err := SaveProjects(projects); err != nil {
+			return nil, err
+		}
 	}
 
 	return projects, nil

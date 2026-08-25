@@ -1,4 +1,5 @@
 import tkinter as tk
+from datetime import datetime, timezone
 from tkinter import filedialog, messagebox
 import csv
 import requests
@@ -13,6 +14,32 @@ BORDER = "#263242"
 TEXT = "#F4F7FB"
 MUTED = "#AEB7C5"
 BLUE = "#1769E8"
+
+
+def format_relative_creation_date(value, now=None):
+    if not value:
+        return "Created date unavailable"
+
+    try:
+        created_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if created_at.year == 1:
+            return "Created date unavailable"
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        current_time = now or datetime.now(timezone.utc)
+        elapsed_seconds = max(0, (current_time - created_at).total_seconds())
+    except (AttributeError, TypeError, ValueError):
+        return "Created date unavailable"
+
+    if elapsed_seconds < 60:
+        return "Created just now"
+
+    elapsed_days = int(elapsed_seconds // 86400)
+    if elapsed_days < 7:
+        return f"Created {elapsed_days} day{'s' if elapsed_days != 1 else ''} ago"
+
+    elapsed_weeks = elapsed_days // 7
+    return f"Created {elapsed_weeks} week{'s' if elapsed_weeks != 1 else ''} ago"
 
 
 def parse_answer_key_csv(rows, expected_count):
@@ -85,7 +112,7 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     project_details = tk.Frame(project_panel, bg=PANEL)
     project_details.pack(side="left", anchor="center")
     tk.Label(project_details, text=project.get("name", "Untitled Project"), font=("Segoe UI", 12, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w")
-    tk.Label(project_details, text=f"{project.get('question_count', 0)} Questions    |    Created just now", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", pady=(4, 0))
+    tk.Label(project_details, text=f"{project.get('question_count', 0)} Questions    |    {format_relative_creation_date(project.get('created_at'))}", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", pady=(4, 0))
 
     tk.Label(content, text="Choose an action", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG).pack(anchor="w", pady=(14, 7))
 
