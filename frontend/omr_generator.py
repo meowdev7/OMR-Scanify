@@ -392,13 +392,13 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
 
 def _entry_row(parent, label, variable):
     tk.Label(parent, text=label, font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(1, 1))
-    tk.Entry(parent, textvariable=variable, font=("Segoe UI", 9), fg=TEXT, bg=INPUT, insertbackground=TEXT, relief="flat", bd=0).pack(fill="x", padx=12, ipady=4)
+    tk.Entry(parent, textvariable=variable, font=("Segoe UI", 9), fg=TEXT, bg=INPUT, insertbackground=TEXT, relief="flat", bd=0, highlightthickness=1, highlightbackground=BORDER, highlightcolor=BLUE).pack(fill="x", padx=12, ipady=5)
 
 
 def _entry_grid_row(parent, label, variable, row, column, column_span=1):
     tk.Label(parent, text=label, font=("Segoe UI", 8), fg=MUTED, bg=PANEL).grid(row=row * 2, column=column, columnspan=column_span, sticky="w", padx=(0, 8) if column == 0 and column_span == 1 else 0, pady=(1, 1))
-    entry = tk.Entry(parent, textvariable=variable, font=("Segoe UI", 9), fg=TEXT, bg=INPUT, insertbackground=TEXT, relief="flat", bd=0)
-    entry.grid(row=row * 2 + 1, column=column, columnspan=column_span, sticky="ew", padx=(0, 8) if column == 0 and column_span == 1 else 0, pady=(0, 3))
+    entry = tk.Entry(parent, textvariable=variable, font=("Segoe UI", 9), fg=TEXT, bg=INPUT, insertbackground=TEXT, relief="flat", bd=0, highlightthickness=1, highlightbackground=BORDER, highlightcolor=BLUE)
+    entry.grid(row=row * 2 + 1, column=column, columnspan=column_span, sticky="ew", padx=(0, 8) if column == 0 and column_span == 1 else 0, pady=(0, 5), ipady=4)
 
 
 def _select_row(parent, label, variable, options):
