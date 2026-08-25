@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox
 
 from PIL import ImageTk
 from functions import create_project_window
-from storage import get_project
+from storage import get_project, update_project
 from theme import apply_theme
 
 
@@ -25,12 +25,13 @@ BLUE = "#1769E8"
 INPUT = "#151E2B"
 
 
-def create_omr_generator_page(parent, project=None, on_back=None, on_project_created=None):
+def create_omr_generator_page(parent, project=None, on_back=None, on_project_created=None, on_project_updated=None):
     page = tk.Frame(parent, bg=BG)
     preview_image = {"value": None}
     generated_pages = {"value": []}
     generated_generator = {"value": None}
     preview_job = {"value": None}
+    project_sync_job = {"value": None}
     current_project = {"value": project}
     no_project_dialog = {"value": None}
 
@@ -157,6 +158,42 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         except Exception as error:
             generated_pages["value"] = []
             messagebox.showerror("Preview failed", f"Could not generate the OMR preview:\n\n{error}", parent=page.winfo_toplevel())
+
+    def sync_project_values():
+        project_sync_job["value"] = None
+        selected_project = current_project["value"]
+        if selected_project is None:
+            return
+
+        try:
+            question_count = int(values["questions"].get())
+            if question_count <= 0:
+                return
+        except ValueError:
+            return
+
+        project_name = values["subject"].get().strip()
+        if not project_name:
+            return
+
+        try:
+            updated_project = update_project(selected_project["id"], project_name, question_count)
+        except Exception as error:
+            messagebox.showerror("Project update failed", f"Could not save project changes:\n\n{error}", parent=page.winfo_toplevel())
+            if project_sync_job["value"] is not None:
+                page.after_cancel(project_sync_job["value"])
+                project_sync_job["value"] = None
+            set_project(selected_project)
+            return
+
+        current_project["value"] = updated_project
+        if on_project_updated is not None:
+            on_project_updated(updated_project)
+
+    def schedule_project_sync(*_):
+        if project_sync_job["value"] is not None:
+            page.after_cancel(project_sync_job["value"])
+        project_sync_job["value"] = page.after(500, sync_project_values)
 
     def generate_omr():
         generate_preview()
@@ -345,6 +382,8 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
 
     for variable in values.values():
         variable.trace_add("write", schedule_preview)
+    values["questions"].trace_add("write", schedule_project_sync)
+    values["subject"].trace_add("write", schedule_project_sync)
 
     if project is not None:
         page.after(100, generate_preview)

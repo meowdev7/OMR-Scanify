@@ -107,6 +107,12 @@ def on_generator_project_created(project):
     projects_page.refresh_projects()
 
 
+def on_project_updated(project):
+    global current_project
+    current_project = project
+    projects_page.refresh_projects()
+
+
 def hide_extra_pages():
     if action_page is not None:
         action_page.pack_forget()
@@ -143,6 +149,7 @@ generator_page = create_omr_generator_page(
     current_project,
     on_back=show_projects,
     on_project_created=on_generator_project_created,
+    on_project_updated=on_project_updated,
 )
 settings_page = create_settings_page(content_frame, theme_mode, on_theme_changed)
 

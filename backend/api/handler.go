@@ -257,17 +257,41 @@ func RenameProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name string `json:"name"`
+		Name          *string `json:"name"`
+		QuestionCount *int    `json:"question_count"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Name) == "" {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Invalid project name")
 		return
 	}
 
-	p := project.RenameProject(id, req.Name)
+	if req.Name == nil && req.QuestionCount == nil {
+		writeJSONError(w, http.StatusBadRequest, "No project values provided")
+		return
+	}
+	if req.Name != nil && strings.TrimSpace(*req.Name) == "" {
+		writeJSONError(w, http.StatusBadRequest, "Invalid project name")
+		return
+	}
+	if req.QuestionCount != nil && *req.QuestionCount <= 0 {
+		writeJSONError(w, http.StatusBadRequest, "Question count must be positive")
+		return
+	}
+
+	p := project.GetProjectByID(id)
 	if p == nil {
 		writeJSONError(w, http.StatusNotFound, "Project not found")
 		return
+	}
+	if req.QuestionCount != nil && *req.QuestionCount != p.QuestionCount && len(p.AnswerKey) > 0 {
+		writeJSONError(w, http.StatusConflict, "Remove the existing answer key before changing question count")
+		return
+	}
+	if req.Name != nil {
+		p.Name = strings.TrimSpace(*req.Name)
+	}
+	if req.QuestionCount != nil {
+		p.QuestionCount = *req.QuestionCount
 	}
 
 	if err := storage.SaveProjects(project.Projects); err != nil {

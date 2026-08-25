@@ -86,3 +86,18 @@ def delete_project(project_id):
     response = requests.delete(f"{API_URL}/projects/{project_id}", timeout=5)
     response.raise_for_status()
     return response.json()
+
+
+def update_project(project_id, name=None, question_count=None):
+    payload = {}
+    if name is not None:
+        payload["name"] = name
+    if question_count is not None:
+        payload["question_count"] = question_count
+    response = requests.patch(
+        f"{API_URL}/projects/{project_id}",
+        json=payload,
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()
