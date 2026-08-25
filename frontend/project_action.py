@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import csv
 import requests
-from storage import update_answer_key
+from storage import get_project, update_answer_key
 
 from assets import asset_path
 
@@ -15,7 +15,35 @@ MUTED = "#AEB7C5"
 BLUE = "#1769E8"
 
 
-def create_project_action_window(parent, project, on_back=None, on_create_omr=None):
+def parse_answer_key_csv(rows, expected_count):
+    rows = [row for row in rows if row]
+    if not rows:
+        raise ValueError("The CSV file is empty.")
+
+    header = [cell.strip().casefold() for cell in rows[0]]
+    has_header = header == ["question", "answer"]
+    if has_header:
+        rows = rows[1:]
+
+    answers = []
+    for row_number, row in enumerate(rows, start=2 if has_header else 1):
+        if any(not cell.strip() for cell in row):
+            raise ValueError(f"Row {row_number} contains a blank value.")
+        if len(row) != (2 if has_header else 1):
+            raise ValueError(f"Row {row_number} must contain {'question and answer' if has_header else 'one answer'}.")
+
+        answer = row[1] if has_header else row[0]
+        answer = answer.strip().upper()
+        if answer not in {"A", "B", "C", "D"}:
+            raise ValueError(f"Row {row_number} has invalid answer '{answer}'. Use A, B, C, or D.")
+        answers.append(answer)
+
+    if len(answers) != expected_count:
+        raise ValueError(f"Expected {expected_count} answers, found {len(answers)}.")
+    return answers
+
+
+def create_project_action_window(parent, project, on_back=None, on_create_omr=None, on_project_updated=None):
     """Show the actions available immediately after creating a project."""
     action_window = tk.Frame(parent, bg=BG)
 
@@ -68,22 +96,31 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
 
     _create_action_card(actions, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
     def upload_answer_key():
-        filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"), ("Text files", "*.txt")))
+        filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
         if not filename:
             return
         try:
-            with open(filename, "r", encoding="utf-8", newline="") as file:
-                rows = list(csv.reader(file))
-            answers = [cell.strip().upper() for row in rows for cell in row if cell.strip()]
-            expected = project.get("question_count", 0)
-            if len(answers) != expected:
-                raise ValueError(f"Expected {expected} answers, found {len(answers)}.")
+            with open(filename, "r", encoding="utf-8-sig", newline="") as file:
+                answers = parse_answer_key_csv(list(csv.reader(file)), project.get("question_count", 0))
             update_answer_key(project["id"], answers)
+            updated_project = get_project(project["id"])
             messagebox.showinfo("Answer key uploaded", "The answer key was saved to the backend.", parent=action_window.winfo_toplevel())
+            if on_project_updated is not None:
+                on_project_updated(updated_project)
         except (OSError, ValueError, KeyError, requests.RequestException) as error:
             messagebox.showerror("Answer key upload failed", str(error), parent=action_window.winfo_toplevel())
 
     _create_action_card(actions, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
+
+    answer_key_panel = tk.Frame(content, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
+    answer_key_panel.pack(fill="both", expand=True, pady=(12, 0), ipady=10)
+    tk.Label(answer_key_panel, text="Answer Key", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16)
+    answer_key = project.get("answer_key") or []
+    if answer_key:
+        key_text = "    ".join(f"{index}: {answer}" for index, answer in enumerate(answer_key, start=1))
+        tk.Label(answer_key_panel, text=key_text, font=("Consolas", 10), fg=MUTED, bg=PANEL, wraplength=900, justify="left").pack(anchor="w", padx=16, pady=(8, 0))
+    else:
+        tk.Label(answer_key_panel, text="No answer key uploaded yet.", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", padx=16, pady=(8, 0))
 
     tip = tk.Frame(content, bg="#0B1423", highlightbackground=BORDER, highlightthickness=1)
     tip.pack(fill="x", pady=(12, 0), ipady=7)

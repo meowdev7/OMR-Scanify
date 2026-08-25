@@ -139,6 +139,17 @@ Response (200):
 
 ### Answer Key Management
 
+Answer keys are uploaded from the project action/details page as CSV files. The supported format is one answer per row in question order, for example:
+
+```csv
+A
+B
+C
+D
+```
+
+The optional two-column format `question,answer` is also supported. Answers are trimmed, case-normalized, and must be `A`, `B`, `C`, or `D`; the number of answers must match the project's `question_count`. The key is stored in the owning project JSON file and is displayed when its saved project card is opened.
+
 #### Set Answer Key
 ```
 PUT /api/v1/projects/{id}/answer-key
@@ -146,13 +157,13 @@ Content-Type: application/json
 
 Request Body:
 {
-  "answer_key": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2]
+  "answer_key": ["A", "B", "C", "D", "A", "B", "C", "D", "A", "B"]
 }
 
 Response (200):
 {
   "id": "proj-12345",
-  "answer_key": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2]
+  "answer_key": ["A", "B", "C", "D", "A", "B", "C", "D", "A", "B"]
 }
 ```
 **Frontend Usage**: `storage.py:update_answer_key()` - Called from project action page when user sets the answer key.
@@ -351,7 +362,7 @@ The Settings page is created by `create_settings_page()` in `settings.py`. Its A
 
 Selecting a mode immediately updates the main window, sidebar, dashboard, project pages, generator, settings page, and dialogs through `apply_theme()` in `theme.py`. Action buttons use the blue accent while hovered and return to the background of their surrounding container when the pointer leaves.
 
-The selected mode currently exists only for the active application session. It resets to Dark when `UI.py` starts; the Go backend does not store frontend appearance preferences.
+The selected mode is stored by the Go backend in the user's OMR Scanify configuration directory and restored when `UI.py` starts. If the backend is unavailable, the frontend falls back to Dark for that session.
 
 ### Dashboard
 
@@ -382,7 +393,7 @@ The search, sort, grid, and list controls are currently visual controls. Their b
 
 ### Project Actions
 
-The project action page is built by `create_project_action_window()` in `project_action.py`. It is an embedded frame, not a separate movable window, so it stays inside the main content area beside the sidebar. It provides navigation back to Projects and a Create OMR action.
+The project action page is built by `create_project_action_window()` in `project_action.py`. It is an embedded frame, not a separate movable window, so it stays inside the main content area beside the sidebar. It provides navigation back to Projects, displays the project's saved answer key, supports CSV upload/replacement, and provides a Create OMR action.
 
 ### OMR Generator
 

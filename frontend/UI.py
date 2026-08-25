@@ -1,4 +1,5 @@
 from tkinter import *
+import requests
 from functions import create_project_window
 from sidebar import create_sidebar
 from projects import create_projects_page
@@ -6,6 +7,7 @@ from assets import asset_path
 from project_action import create_project_action_window
 from omr_generator import create_omr_generator_page
 from settings import create_settings_page
+from storage import get_project, load_theme_preference, save_theme_preference
 from theme import PALETTES, apply_theme, resolve_theme
 
 
@@ -23,12 +25,16 @@ def on_project_created(project):
 
 def show_project_actions(project):
     global action_page, current_project
+    try:
+        project = get_project(project["id"])
+    except (KeyError, requests.RequestException):
+        pass
     current_project = project
     dashboard_frame.pack_forget()
     projects_page.pack_forget()
     settings_page.pack_forget()
     hide_extra_pages()
-    action_page = create_project_action_window(content_frame, project, show_projects, show_generator)
+    action_page = create_project_action_window(content_frame, project, show_projects, show_generator, show_project_actions)
     action_page.pack(side="left", fill="both", expand=True)
     apply_theme(window, theme_mode)
 
@@ -76,6 +82,7 @@ def on_theme_changed(mode):
     global theme_mode
     theme_mode = mode
     window._theme_mode = mode
+    save_theme_preference(mode)
     apply_theme(window, theme_mode)
 
 
@@ -117,7 +124,7 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
-theme_mode = "dark"
+theme_mode = load_theme_preference()
 window._theme_mode = theme_mode
 action_page = None
 generator_page = None

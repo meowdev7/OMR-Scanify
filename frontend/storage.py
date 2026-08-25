@@ -17,6 +17,28 @@ def get_projects_dir():
     return projects_dir
 
 
+def load_theme_preference():
+    try:
+        response = requests.get(f"{API_URL}/preferences", timeout=2)
+        response.raise_for_status()
+        theme = response.json().get("theme")
+        return theme if theme in {"dark", "light", "system"} else "dark"
+    except (requests.RequestException, ValueError):
+        return "dark"
+
+
+def save_theme_preference(theme):
+    try:
+        response = requests.put(
+            f"{API_URL}/preferences",
+            json={"theme": theme},
+            timeout=2,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        pass
+
+
 def load_projects():
     response = requests.get(f"{API_URL}/projects", timeout=5)
     response.raise_for_status()

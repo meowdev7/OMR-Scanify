@@ -21,6 +21,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /api/v1/preferences", api.PreferencesHandler)
+	mux.HandleFunc("PUT /api/v1/preferences", api.PreferencesHandler)
 	mux.HandleFunc("GET /api/v1/projects", api.ListProjectsHandler)
 	mux.HandleFunc("POST /api/v1/projects", api.CreateProjectHandler)
 

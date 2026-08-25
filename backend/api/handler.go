@@ -40,6 +40,38 @@ func isValidMCQAnswer(value string) bool {
 	}
 }
 
+// PreferencesHandler handles GET and PUT /api/v1/preferences.
+func PreferencesHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		preferences, err := storage.LoadPreferences()
+		if err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "Failed to load preferences")
+			return
+		}
+		writeJSON(w, http.StatusOK, preferences)
+	case http.MethodPut:
+		var preferences storage.Preferences
+		if err := json.NewDecoder(r.Body).Decode(&preferences); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Invalid JSON")
+			return
+		}
+
+		if preferences.Theme != "dark" && preferences.Theme != "light" && preferences.Theme != "system" {
+			writeJSONError(w, http.StatusBadRequest, "Invalid theme")
+			return
+		}
+
+		if err := storage.SavePreferences(preferences); err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "Failed to save preferences")
+			return
+		}
+		writeJSON(w, http.StatusOK, preferences)
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
+}
+
 // SubmissionHandler handles POST /api/v1/projects/{id}/submissions
 
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
