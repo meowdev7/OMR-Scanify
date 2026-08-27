@@ -13,5 +13,6 @@ Thumbs.db
 
 frontend/__pycache__/
 services/__pycache__/
+services/Generators/__pycache__/
 
 .idea/

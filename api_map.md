@@ -1,4 +1,5 @@
 POST /api/v1/projects
+GET  /api/v1/projects/{id}
 POST /api/v1/projects/{id}/students/import
 PUT  /api/v1/projects/{id}/answer-key
 POST /api/v1/projects/{id}/sheets/generate

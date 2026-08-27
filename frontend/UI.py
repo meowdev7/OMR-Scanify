@@ -1,48 +1,65 @@
 from tkinter import *
+import requests
 from functions import create_project_window
 from sidebar import create_sidebar
 from projects import create_projects_page
 from assets import asset_path
-import requests
-
-
-def create_project(project_window, project_name, question_count):
-    data = {
-        "name": project_name,
-        "question_count": question_count
-    }
-
-    response = requests.post(
-        "http://127.0.0.1:8080/api/v1/projects",
-        json=data
-    )
-
-    print("Backend response:", response.status_code)
-    print(response.json())
+from project_action import create_project_action_window
+from omr_generator import create_omr_generator_page
+from settings import create_settings_page
+from storage import get_project, load_theme_preference, save_theme_preference
+from theme import PALETTES, apply_theme, resolve_theme
 
 
 def start_scan(event=None):
-    create_project_window(window, projects_page.refresh_projects)
-    # Later:
-    # open file dialog / camera / scanning screen
+    dialog = create_project_window(window, on_project_created)
+    apply_theme(dialog, theme_mode)
+
+
+def on_project_created(project):
+    global action_page, current_project
+    current_project = project
+    projects_page.refresh_projects()
+    show_project_actions(project)
+
+
+def show_project_actions(project):
+    global action_page, current_project
+    try:
+        project = get_project(project["id"])
+    except (KeyError, requests.RequestException):
+        pass
+    current_project = project
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    settings_page.pack_forget()
+    hide_extra_pages()
+    action_page = create_project_action_window(content_frame, project, show_projects, show_generator, show_project_actions)
+    action_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
 
 def card_enter(event=None):
-    project_card.config(highlightbackground="#3A3F46")
+    project_card.config(highlightbackground=PALETTES[resolve_theme(theme_mode)]["blue"])
 
 def card_leave(event=None):
-    project_card.config(highlightbackground="#2A2F36")
+    project_card.config(highlightbackground=PALETTES[resolve_theme(theme_mode)]["border"])
 def show_dashboard():
+    hide_extra_pages()
     projects_page.pack_forget()
+    settings_page.pack_forget()
     dashboard_frame.pack(
         side="left",
         fill="both",
         expand=True
     )
+    apply_theme(window, theme_mode)
 
 
 def show_projects():
+    hide_extra_pages()
     # Hide the dashboard
     dashboard_frame.pack_forget()
+    settings_page.pack_forget()
 
     # Show the Projects page
     projects_page.pack(
@@ -50,6 +67,57 @@ def show_projects():
         fill="both",
         expand=True
     )
+    apply_theme(window, theme_mode)
+
+
+def show_settings():
+    hide_extra_pages()
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    settings_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
+
+
+def on_theme_changed(mode):
+    global theme_mode
+    theme_mode = mode
+    window._theme_mode = mode
+    save_theme_preference(mode)
+    apply_theme(window, theme_mode)
+
+
+def show_generator(project=None):
+    global current_project
+    if project is not None:
+        current_project = project
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    settings_page.pack_forget()
+    hide_extra_pages()
+    generator_page.set_project(current_project)
+    generator_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
+    if current_project is None:
+        generator_page.show_no_project_dialog()
+
+
+def on_generator_project_created(project):
+    global current_project
+    current_project = project
+    projects_page.refresh_projects()
+
+
+def on_project_updated(project):
+    global current_project
+    current_project = project
+    projects_page.refresh_projects()
+
+
+def hide_extra_pages():
+    if action_page is not None:
+        action_page.pack_forget()
+    if generator_page is not None:
+        generator_page.pack_forget()
 
 
 window = Tk()
@@ -62,7 +130,12 @@ card_image = card_image.subsample(11, 11)  # Resize the image to 1/3 of its orig
 window.iconphoto(True, icon)
 
 window.config(background="black")
-sidebar = create_sidebar(window, show_dashboard, show_projects)    #created a sidebar using the create_sidebar function from sidebar.py
+theme_mode = load_theme_preference()
+window._theme_mode = theme_mode
+action_page = None
+generator_page = None
+current_project = None
+sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator, show_settings)
 
 content_frame = Frame(window, bg="black")
 content_frame.pack(side="left", fill="both", expand=True)
@@ -70,7 +143,15 @@ content_frame.pack(side="left", fill="both", expand=True)
 dashboard_frame = Frame(content_frame, bg="black")
 dashboard_frame.pack(side="left", fill="both", expand=True)
 
-projects_page = create_projects_page(content_frame, start_scan)
+projects_page = create_projects_page(content_frame, start_scan, show_project_actions)
+generator_page = create_omr_generator_page(
+    content_frame,
+    current_project,
+    on_back=show_projects,
+    on_project_created=on_generator_project_created,
+    on_project_updated=on_project_updated,
+)
+settings_page = create_settings_page(content_frame, theme_mode, on_theme_changed)
 
 label= Label(dashboard_frame,   # added a label for the dashboard title
              text="Dashboard" , 
@@ -156,6 +237,7 @@ card_subtitle.bind("<Leave>", card_leave)
 card_image_label.bind("<Enter>", card_enter)
 card_image_label.bind("<Leave>", card_leave)
 
+apply_theme(window, theme_mode)
 
 
 

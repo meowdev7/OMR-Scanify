@@ -4,44 +4,10 @@ import (
 	"backend/models"
 	"fmt"
 	"strings"
+	"time"
 )
 
-var Projects = []models.Project{
-	{
-		ID:            "PHY-001",
-		Name:          "Physics Unit Test 1",
-		QuestionCount: 8,
-		AnswerKey: []string{
-			"A",
-			"B",
-			"C",
-			"A",
-			"D",
-			"A",
-			"C",
-			"D",
-		},
-		Students: []models.Student{
-			{
-				ID:      "STU-001",
-				Name:    "Example Student",
-				Class:   "XI",
-				Section: "A1",
-				RollNo:  "17",
-				SheetID: "PHY-001-S0001",
-			},
-			{
-				ID:      "STU-002",
-				Name:    "Another Student",
-				Class:   "XI",
-				Section: "A1",
-				RollNo:  "18",
-				SheetID: "PHY-001-S0002",
-			},
-		},
-		Results: []models.Result{},
-	},
-}
+var Projects = []models.Project{}
 
 func GetProjectByID(id string) *models.Project {
 	for i := range Projects {
@@ -67,6 +33,7 @@ func CreateProject(name string, questionCount int) *models.Project {
 	p := models.Project{
 		ID:            id,
 		Name:          name,
+		CreatedAt:     time.Now(),
 		QuestionCount: questionCount,
 		AnswerKey:     []string{},
 		Students:      []models.Student{},
@@ -76,6 +43,30 @@ func CreateProject(name string, questionCount int) *models.Project {
 	Projects = append(Projects, p)
 
 	return &Projects[len(Projects)-1]
+}
+
+func RenameProject(id string, name string) *models.Project {
+	p := GetProjectByID(id)
+	if p == nil {
+		return nil
+	}
+
+	p.Name = strings.TrimSpace(name)
+	return p
+}
+
+func DeleteProject(id string) *models.Project {
+	for i := range Projects {
+		if Projects[i].ID != id {
+			continue
+		}
+
+		deleted := Projects[i]
+		Projects = append(Projects[:i], Projects[i+1:]...)
+		return &deleted
+	}
+
+	return nil
 }
 
 func AddResultToProject(p *models.Project, r models.Result) {

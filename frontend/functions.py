@@ -1,24 +1,29 @@
-from tkinter import Toplevel, Label, Entry, Button
+from tkinter import Toplevel, Label, Entry, Button, messagebox
 
 import requests
 
 
 def create_project(project_window, project_name, question_count, on_created=None):
-    data = {
-        "name": project_name,
-        "question_count": int(question_count)
-    }
-
-    response = requests.post(
-        "http://127.0.0.1:8080/api/v1/projects",
-        json=data
-    )
-
-    print("Status:", response.status_code)
-    print("Response:", response.json())
+    try:
+        data = {
+            "name": project_name.strip(),
+            "question_count": int(question_count)
+        }
+        if not data["name"] or data["question_count"] <= 0:
+            raise ValueError("Enter a project name and a positive question count.")
+        response = requests.post(
+            "http://127.0.0.1:8080/api/v1/projects",
+            json=data,
+            timeout=5,
+        )
+        response.raise_for_status()
+        project = response.json()
+    except (ValueError, requests.RequestException) as error:
+        messagebox.showerror("Project creation failed", str(error), parent=project_window)
+        return
 
     if on_created is not None:
-        on_created()
+        on_created(project)
 
     project_window.destroy()
 
@@ -106,6 +111,12 @@ def create_project_window(parent, on_created=None):
     project_window,
     text="Create",
     font=("Segoe UI", 11, "bold"),
+    fg="#FFFFFF",
+    bg="#1769E8",
+    activeforeground="#FFFFFF",
+    activebackground="#2B7CF0",
+    relief="flat",
+    bd=0,
     command=lambda: create_project(
         project_window,
         project_name.get(),
@@ -119,17 +130,6 @@ def create_project_window(parent, on_created=None):
     project_window.transient(parent)
     project_name.focus()
 
+    return project_window
+
     
-def card_enter(event):       #change the background color of the project card when the mouse enters the card area
-    quick_scan_card.config(bg="#1C2128")
-    card_title.config(bg="#1C2128")
-    card_subtitle.config(bg="#1C2128")
-    card_image_label.config(bg="#1C2128")
-
-
-def card_leave(event):  #change the background color of the project card back to the original color when the mouse leaves the card area
-    quick_scan_card.config(bg="#15181D")
-    card_title.config(bg="#15181D")
-    card_subtitle.config(bg="#15181D")
-    card_image_label.config(bg="#15181D")
-
