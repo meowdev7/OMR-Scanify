@@ -7,7 +7,10 @@ import zlib
 from pathlib import Path
 
 import cv2
-import fitz
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
 import numpy as np
 
 from PIL import Image
@@ -65,7 +68,7 @@ DEBUG_OUTPUT_DIR.mkdir(
 
 DEFAULT_INPUT = (
     INPUT_DIR
-    / "OMR_6769_Jhonny_Sins_page_1.png"
+    / "Jhonny_Sheet_1.png" # "OMR_6769_Jhonny_Sins_page_1.png"
 )
 
 
@@ -92,6 +95,14 @@ SUPPORTED_EXTENSIONS = (
 # ============================================================
 
 QR_PREFIX = "OMR1:"
+
+# QR/geometry robustness settings. These are deliberately generous so
+# downscaled JPEGs and ordinary scanner output are still readable.
+QR_CORNER_FRACTION = 0.32
+QR_UPSCALE_FACTORS = (2.0, 3.0, 4.0)
+ASPECT_RATIO_TOLERANCE = 0.035
+AUTO_TEMPLATE_MIN_FIT = 0.12
+AUTO_TEMPLATE_MIN_SEPARATION = 1.15
 
 
 # ============================================================
@@ -307,6 +318,17 @@ class OMRTemplate:
             self.template_id = (
                 self.calculate_template_id()
             )
+
+        self.question_count = self.data.get(
+            "question_count"
+        )
+
+        self.student = dict(
+            self.data.get(
+                "student",
+                {}
+            )
+        )
 
     # ========================================================
     # NORMALIZE
@@ -555,13 +577,66 @@ class OMRTemplate:
             )
 
         # ====================================================
+        # QUESTION COUNT
+        # ====================================================
+
+        question_count = metadata.get(
+            "question_count",
+            metadata.get(
+                "question_count_on_sheet",
+                metadata.get(
+                    "questions",
+                    None
+                )
+            )
+        )
+
+        if question_count is not None:
+
+            try:
+                question_count = max(
+                    0,
+                    int(round(float(question_count)))
+                )
+            except (ValueError, TypeError):
+                question_count = None
+
+        result[
+            "question_count"
+        ] = question_count
+
+        # ====================================================
         # CHOICES
         # ====================================================
 
         choices = metadata.get(
             "choices",
-            "ABCD"
+            None
         )
+
+        # The GUI-friendly schema may specify only a number of options.
+        # Preserve explicit labels when they exist; otherwise generate
+        # the conventional A/B/C/D/E/F labels.
+        if choices is None:
+
+            options = metadata.get(
+                "options",
+                4
+            )
+
+            if isinstance(options, (list, tuple)):
+                choices = "".join(
+                    str(choice)
+                    for choice in options
+                )
+
+            else:
+                options_text = str(options).strip()
+                if options_text.isdigit():
+                    option_count = int(options_text)
+                    choices = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[:option_count]
+                else:
+                    choices = options_text
 
         if isinstance(
             choices,
@@ -597,6 +672,29 @@ class OMRTemplate:
         result[
             "choices"
         ] = choices
+
+        # ====================================================
+        # STUDENT/METADATA ALIASES
+        # ====================================================
+
+        result[
+            "student"
+        ] = {
+            "name": str(metadata.get("name", "")).strip(),
+            "class": str(metadata.get(
+                "class",
+                metadata.get("class_standard", "")
+            )).strip(),
+            "section": str(metadata.get(
+                "section",
+                metadata.get("class_division", "")
+            )).strip(),
+            "admission": str(metadata.get(
+                "admission",
+                metadata.get("admission_number", "")
+            )).strip(),
+            "subject": str(metadata.get("subject", "")).strip(),
+        }
 
         # ====================================================
         # TEMPLATE ID
@@ -821,45 +919,43 @@ class OMRTemplate:
     # ========================================================
 
     def question_width(
-        self
+        self,
+        max_number=None
     ):
+
+        if max_number is None:
+            max_number = self.question_count or 999
 
         number_width = (
             self.question_number_width(
-                999
+                max(1, int(max_number))
             )
         )
 
         bubble_area = (
-
             self.question_bubble_gap
-
             + (
                 self.bubble_radius
                 * 2
             )
-
             + (
                 max(
                     0,
-                    len(self.choices)
-                    - 1
+                    len(self.choices) - 1
                 )
                 * self.bubble_spacing
             )
         )
 
-        return (
-            number_width
-            + bubble_area
-        )
+        return number_width + bubble_area
 
     # ========================================================
     # MAX COLUMNS
     # ========================================================
 
     def max_columns(
-        self
+        self,
+        max_number=None
     ):
 
         usable_width = (
@@ -868,7 +964,7 @@ class OMRTemplate:
         )
 
         question_width = (
-            self.question_width()
+            self.question_width(max_number)
         )
 
         if question_width <= 0:
@@ -909,8 +1005,14 @@ class OMRTemplate:
             / rows
         )
 
+        max_number = (
+            self.question_count
+            or (first_question + max(0, question_count - 1))
+            or 1
+        )
+
         max_columns = (
-            self.max_columns()
+            self.max_columns(max_number)
         )
 
         columns = min(
@@ -1039,37 +1141,37 @@ class QRDecoder:
         image
     ):
 
+        """Decode the OMR QR using whole-image and corner-focused passes.
+
+        Generated sheets place the QR at one of the four page corners.
+        A QR that is too small for the full-page detector can still be
+        decoded reliably from a corner crop after enlargement.
+        """
+
+        if image is None or image.size == 0:
+            return None
+
         candidates = []
-
-        # Original
-        candidates.append(
-            image
-        )
-
-        # Grayscale
         gray = cv2.cvtColor(
             image,
             cv2.COLOR_BGR2GRAY
         )
 
-        candidates.append(
-            gray
-        )
+        # Whole page first.
+        candidates.append(image)
+        candidates.append(gray)
 
-        # Enlarged grayscale
-        candidates.append(
-            cv2.resize(
-                gray,
-                None,
-                fx=1.5,
-                fy=1.5,
-                interpolation=(
-                    cv2.INTER_CUBIC
+        for scale in QR_UPSCALE_FACTORS:
+            candidates.append(
+                cv2.resize(
+                    gray,
+                    None,
+                    fx=scale,
+                    fy=scale,
+                    interpolation=cv2.INTER_CUBIC
                 )
             )
-        )
 
-        # Binary
         candidates.append(
             cv2.threshold(
                 gray,
@@ -1079,55 +1181,125 @@ class QRDecoder:
             )[1]
         )
 
-        # ----------------------------------------------------
-        # Standard detector
-        # ----------------------------------------------------
+        candidates.append(
+            cv2.adaptiveThreshold(
+                gray,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                31,
+                5
+            )
+        )
 
-        for candidate in candidates:
+        payload = self._try_candidates(candidates)
+        if payload:
+            return payload
 
-            try:
+        # Focus on each corner. This is the important fallback for
+        # downscaled sheets such as 1131x1600 JPEGs.
+        h, w = gray.shape[:2]
+        frac = QR_CORNER_FRACTION
+        corners = (
+            (0, 0, int(w * frac), int(h * frac)),
+            (int(w * (1 - frac)), 0, w, int(h * frac)),
+            (int(w * (1 - frac)), int(h * (1 - frac)), w, h),
+            (0, int(h * (1 - frac)), int(w * frac), h),
+        )
 
-                data, points, _ = (
-                    self.detector.detectAndDecode(
-                        candidate
-                    )
-                )
+        for x1, y1, x2, y2 in corners:
+            crop = gray[y1:y2, x1:x2]
 
-                if data:
-
-                    return self.parse(
-                        data
-                    )
-
-            except Exception:
-
+            if crop.size == 0:
                 continue
 
-        # ----------------------------------------------------
-        # Multi detector
-        # ----------------------------------------------------
+            crop_candidates = [crop]
 
-        try:
+            # CLAHE helps with uneven scanner/camera lighting.
+            try:
+                clahe = cv2.createCLAHE(
+                    clipLimit=2.0,
+                    tileGridSize=(8, 8)
+                )
+                crop_candidates.append(
+                    clahe.apply(crop)
+                )
+            except Exception:
+                pass
 
-            data, points, _ = (
-                self.detector.detectAndDecodeMulti(
-                    image
+            crop_candidates.append(
+                cv2.threshold(
+                    crop,
+                    180,
+                    255,
+                    cv2.THRESH_BINARY
+                )[1]
+            )
+
+            crop_candidates.append(
+                cv2.adaptiveThreshold(
+                    crop,
+                    255,
+                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    cv2.THRESH_BINARY,
+                    31,
+                    5
                 )
             )
 
-            if data:
-
-                for item in data:
-
-                    if item:
-
-                        return self.parse(
-                            item
+            enlarged = []
+            for candidate in crop_candidates:
+                enlarged.append(candidate)
+                for scale in QR_UPSCALE_FACTORS:
+                    enlarged.append(
+                        cv2.resize(
+                            candidate,
+                            None,
+                            fx=scale,
+                            fy=scale,
+                            interpolation=cv2.INTER_CUBIC
                         )
+                    )
 
-        except Exception:
+            payload = self._try_candidates(enlarged)
+            if payload:
+                return payload
 
-            pass
+        # Last attempt with detectAndDecodeMulti.
+        for candidate in candidates[:2]:
+            try:
+                data, _, _ = self.detector.detectAndDecodeMulti(
+                    candidate
+                )
+                if data:
+                    for item in data:
+                        if item:
+                            try:
+                                return self.parse(item)
+                            except Exception:
+                                continue
+            except Exception:
+                continue
+
+        return None
+
+    def _try_candidates(
+        self,
+        candidates
+    ):
+
+        for candidate in candidates:
+            try:
+                data, _, _ = self.detector.detectAndDecode(
+                    candidate
+                )
+                if data:
+                    try:
+                        return self.parse(data)
+                    except Exception:
+                        continue
+            except Exception:
+                continue
 
         return None
 
@@ -1489,6 +1661,8 @@ class RegistrationDetector:
         template
     ):
 
+        self.template = template
+
         height, width = (
             image.shape[:2]
         )
@@ -1499,13 +1673,8 @@ class RegistrationDetector:
         # ====================================================
 
         if (
-            width
-            == template.width
-
-            and
-
-            height
-            == template.height
+            width == template.width
+            and height == template.height
         ):
 
             print(
@@ -1514,32 +1683,45 @@ class RegistrationDetector:
             )
 
             return {
-
                 "type": "canonical",
-
                 "points": np.array(
                     [
-                        [
-                            0,
-                            0
-                        ],
-
-                        [
-                            width - 1,
-                            0
-                        ],
-
-                        [
-                            width - 1,
-                            height - 1
-                        ],
-
-                        [
-                            0,
-                            height - 1
-                        ],
+                        [0, 0],
+                        [width - 1, 0],
+                        [width - 1, height - 1],
+                        [0, height - 1],
                     ],
+                    dtype=np.float32
+                )
+            }
 
+        # A resized copy of the full page has the same aspect ratio even
+        # though its pixel dimensions differ. Treat it as a scaled
+        # canonical page. This is the exact case of a 2480x3508 sheet
+        # saved as an 1131x1600 JPEG.
+        image_ratio = width / float(max(1, height))
+        template_ratio = template.width / float(max(1, template.height))
+
+        ratio_error = abs(image_ratio - template_ratio) / max(
+            template_ratio, 1e-9
+        )
+
+        if ratio_error <= ASPECT_RATIO_TOLERANCE:
+
+            print(
+                "[Geometry] Full-page aspect ratio match; "
+                "rescaling to template dimensions."
+            )
+
+            return {
+                "type": "scaled",
+                "points": np.array(
+                    [
+                        [0, 0],
+                        [width - 1, 0],
+                        [width - 1, height - 1],
+                        [0, height - 1],
+                    ],
                     dtype=np.float32
                 )
             }
@@ -1631,13 +1813,25 @@ class RegistrationDetector:
             self.marker_size
         )
 
-        minimum = (
-            expected * 0.35
-        )
+        # Estimate the image scale relative to the canonical template.
+        # This prevents a 60 px marker from being rejected when a page
+        # has been resized to roughly half resolution.
+        template = getattr(self, "template", None)
+        scale_candidates = []
+        if template is not None:
+            if template.width > 0 and template.height > 0:
+                scale_candidates.append(
+                    width / float(template.width)
+                )
+                scale_candidates.append(
+                    height / float(template.height)
+                )
 
-        maximum = (
-            expected * 2.8
-        )
+        scale = float(np.median(scale_candidates)) if scale_candidates else 1.0
+        expected_scaled = max(4.0, expected * scale)
+
+        minimum = max(4.0, expected_scaled * 0.35)
+        maximum = max(minimum + 2.0, expected_scaled * 3.5)
 
         for contour in contours:
 
@@ -1808,7 +2002,7 @@ class RegistrationDetector:
 
             if area < (
                 image_area
-                * 0.30
+                * 0.20
             ):
 
                 continue
@@ -1989,6 +2183,24 @@ class PageRectifier:
             )
 
         # ====================================================
+        # SCALED FULL PAGE
+        # ====================================================
+
+        if geometry_type == "scaled":
+
+            corrected = cv2.resize(
+                image,
+                (template.width, template.height),
+                interpolation=cv2.INTER_CUBIC
+            )
+
+            return (
+                corrected,
+                source,
+                geometry_type
+            )
+
+        # ====================================================
         # PAGE BORDER
         # ====================================================
 
@@ -2120,7 +2332,8 @@ class BubbleReader:
     def __init__(
         self,
         blank_threshold=0.055,
-        ambiguity_margin=0.020
+        ambiguity_margin=0.020,
+        mark_threshold=0.18
     ):
 
         self.blank_threshold = (
@@ -2129,6 +2342,13 @@ class BubbleReader:
 
         self.ambiguity_margin = (
             ambiguity_margin
+        )
+
+        # Scores above this value represent substantial ink inside a
+        # bubble. If more than one option crosses it, the question is
+        # treated as ambiguous instead of forcing a false answer.
+        self.mark_threshold = (
+            mark_threshold
         )
 
     # ========================================================
@@ -2143,138 +2363,67 @@ class BubbleReader:
         radius
     ):
 
-        x = int(
-            round(x)
-        )
+        """Score actual ink inside the bubble, not just its printed outline."""
 
-        y = int(
-            round(y)
-        )
+        x = int(round(x))
+        y = int(round(y))
+        radius = max(3, int(round(radius)))
 
-        inner_radius = max(
-            3,
-            int(
-                radius
-                * 0.42
-            )
-        )
+        # The old detector compared the bubble center with the ring around
+        # it. That works for a faint scribble, but a fully filled bubble
+        # darkens both regions and can therefore look blank. Use a compact
+        # inner disk for ink density and a wider background annulus for local
+        # illumination compensation.
+        inner_radius = max(3, int(radius * 0.55))
+        background_inner = max(inner_radius + 2, int(radius * 1.20))
+        background_outer = max(background_inner + 2, int(radius * 1.70))
 
-        outer_radius = max(
-            inner_radius + 3,
-            int(
-                radius
-                * 0.82
-            )
-        )
+        x1 = max(0, x - background_outer)
+        y1 = max(0, y - background_outer)
+        x2 = min(gray.shape[1], x + background_outer + 1)
+        y2 = min(gray.shape[0], y + background_outer + 1)
 
-        x1 = max(
-            0,
-            x - outer_radius
-        )
-
-        y1 = max(
-            0,
-            y - outer_radius
-        )
-
-        x2 = min(
-            gray.shape[1],
-            x + outer_radius + 1
-        )
-
-        y2 = min(
-            gray.shape[0],
-            y + outer_radius + 1
-        )
-
-        roi = gray[
-            y1:y2,
-            x1:x2
-        ]
-
+        roi = gray[y1:y2, x1:x2]
         if roi.size == 0:
-
             return 0.0
 
-        center_x = (
-            x - x1
-        )
+        center_x = x - x1
+        center_y = y - y1
 
-        center_y = (
-            y - y1
-        )
-
-        yy, xx = np.ogrid[
-            0:roi.shape[0],
-            0:roi.shape[1]
-        ]
-
+        yy, xx = np.ogrid[:roi.shape[0], :roi.shape[1]]
         distance_squared = (
-            (
-                xx
-                - center_x
-            ) ** 2
-            +
-            (
-                yy
-                - center_y
-            ) ** 2
+            (xx - center_x) ** 2
+            + (yy - center_y) ** 2
         )
 
-        inner_mask = (
-            distance_squared
-            <= inner_radius ** 2
+        inner_mask = distance_squared <= inner_radius ** 2
+        background_mask = (
+            distance_squared >= background_inner ** 2
+        ) & (
+            distance_squared <= background_outer ** 2
         )
 
-        outer_mask = (
-            distance_squared
-            <= outer_radius ** 2
-        )
+        inner_pixels = roi[inner_mask]
+        background_pixels = roi[background_mask]
 
-        inner_pixels = (
-            roi[
-                inner_mask
-            ]
-        )
-
-        outer_pixels = (
-            roi[
-                outer_mask
-                & ~inner_mask
-            ]
-        )
-
-        if (
-            inner_pixels.size == 0
-            or outer_pixels.size == 0
-        ):
-
+        if inner_pixels.size == 0 or background_pixels.size == 0:
             return 0.0
 
-        inner_mean = float(
-            np.mean(
-                inner_pixels
-            )
+        inner_darkness = float(
+            np.mean(255.0 - inner_pixels) / 255.0
+        )
+        background_darkness = float(
+            np.mean(255.0 - background_pixels) / 255.0
         )
 
-        outer_mean = float(
-            np.mean(
-                outer_pixels
-            )
+        # Local-background corrected ink density. Clamp to zero so text or
+        # page shading cannot create a negative answer score.
+        score = (
+            inner_darkness
+            - 0.35 * background_darkness
         )
 
-        contrast = (
-            outer_mean
-            - inner_mean
-        )
-
-        return max(
-            0.0,
-            float(
-                contrast
-                / 255.0
-            )
-        )
+        return max(0.0, float(score))
 
     # ========================================================
     # READ QUESTION
@@ -2348,12 +2497,23 @@ class BubbleReader:
             - second_score
         )
 
+        marked_options = sum(
+            score >= self.mark_threshold
+            for score in scores
+        )
+
         if (
             best_score
             < self.blank_threshold
         ):
 
             answer = "-"
+
+        elif (
+            marked_options > 1
+        ):
+
+            answer = "?"
 
         elif (
             confidence
@@ -2477,7 +2637,8 @@ class OMRScanner:
     def resolve_template(
         self,
         payload,
-        forced_template_id=None
+        forced_template_id=None,
+        image=None
     ):
 
         # ----------------------------------------------------
@@ -2548,9 +2709,224 @@ class OMRScanner:
 
                 return qr_template
 
+        # ----------------------------------------------------
+        # No QR: use a single local template automatically.
+        # If there are several, prefer the best aspect-ratio match.
+        # ----------------------------------------------------
+
+        local_templates = [
+            entry["template"]
+            for entry in self.template_library.templates.values()
+        ]
+
+        if local_templates:
+
+            if len(local_templates) == 1:
+                template = local_templates[0]
+                print(
+                    "[Template] QR unavailable; using only local template:",
+                    template.template_id
+                )
+                return template
+
+            if image is not None:
+                template = self.auto_select_template(image, local_templates)
+                if template is not None:
+                    return template
+
         raise RuntimeError(
-            "No usable template available."
+            "No usable template available. "
+            "Provide --template TEMPLATE_ID when the QR cannot be read."
         )
+
+    # ========================================================
+    # AUTO TEMPLATE SELECTION
+    # ========================================================
+
+    @staticmethod
+    def bubble_layout_score(
+        gray,
+        template,
+        max_questions=30
+    ):
+
+        """Estimate how well a template's bubble grid matches an image.
+
+        This is used only when QR metadata is unavailable and more than one
+        local template exists. A correct template places its expected bubble
+        centers directly over the printed bubble rings, producing a much
+        higher annulus-darkness score than a wrong layout.
+        """
+
+        question_count = (
+            template.question_count
+            or template.questions_per_column() * template.max_columns()
+        )
+
+        question_count = max(
+            1,
+            min(int(question_count), int(max_questions))
+        )
+
+        questions = template.generate_questions(
+            1,
+            question_count
+        )
+
+        gray = cv2.GaussianBlur(
+            gray,
+            (3, 3),
+            0
+        )
+
+        values = []
+
+        for question in questions:
+            for x, y in question["bubbles"]:
+                x = int(round(x))
+                y = int(round(y))
+                radius = max(3, int(template.bubble_radius))
+
+                outer = max(
+                    radius + 2,
+                    int(radius * 1.20)
+                )
+                inner = max(
+                    2,
+                    int(radius * 0.72)
+                )
+
+                x1 = max(0, x - outer)
+                y1 = max(0, y - outer)
+                x2 = min(gray.shape[1], x + outer + 1)
+                y2 = min(gray.shape[0], y + outer + 1)
+
+                roi = gray[y1:y2, x1:x2]
+                if roi.size == 0:
+                    continue
+
+                cx = x - x1
+                cy = y - y1
+                yy, xx = np.ogrid[:roi.shape[0], :roi.shape[1]]
+                d2 = (xx - cx) ** 2 + (yy - cy) ** 2
+                annulus = (
+                    d2 <= outer ** 2
+                ) & (
+                    d2 >= inner ** 2
+                )
+
+                pixels = roi[annulus]
+                if pixels.size:
+                    darkness = float(
+                        np.mean(255.0 - pixels) / 255.0
+                    )
+                    values.append(darkness)
+
+        if not values:
+            return 0.0
+
+        return float(np.mean(values))
+
+    def auto_select_template(
+        self,
+        image,
+        templates
+    ):
+
+        scored = []
+
+        image_ratio = image.shape[1] / float(max(1, image.shape[0]))
+
+        for template in templates:
+            try:
+                ratio = template.width / float(max(1, template.height))
+                ratio_error = abs(image_ratio - ratio) / max(ratio, 1e-9)
+
+                # Reject templates whose page shape clearly cannot match.
+                # Perspective/scanner distortion can account for a few percent.
+                if ratio_error > ASPECT_RATIO_TOLERANCE:
+                    continue
+
+                corrected, _, _ = self.rectifier.rectify(
+                    image,
+                    template
+                )
+
+                gray = cv2.cvtColor(
+                    corrected,
+                    cv2.COLOR_BGR2GRAY
+                )
+
+                fit = self.bubble_layout_score(
+                    gray,
+                    template
+                )
+
+                scored.append(
+                    (
+                        fit,
+                        -ratio_error,
+                        template
+                    )
+                )
+
+            except Exception as error:
+                print(
+                    "[Template] Auto-test failed for",
+                    template.template_id,
+                    ":",
+                    error
+                )
+
+        if not scored:
+            return None
+
+        scored.sort(
+            key=lambda item: (item[0], item[1]),
+            reverse=True
+        )
+
+        best = scored[0]
+
+        second_fit = (
+            scored[1][0]
+            if len(scored) > 1
+            else 0.0
+        )
+
+        if best[0] < AUTO_TEMPLATE_MIN_FIT:
+            print(
+                "[Template] No local template produced a reliable layout match."
+            )
+            return None
+
+        if (
+            len(scored) > 1
+            and second_fit > 0.0
+            and best[0] < second_fit * AUTO_TEMPLATE_MIN_SEPARATION
+        ):
+            print(
+                "[Template] Local templates are too similar to select safely; "
+                "use --template TEMPLATE_ID."
+            )
+            return None
+
+        print(
+            "[Template] QR unavailable; auto-selected:",
+            best[2].template_id,
+            f"(fit={best[0]:.4f})"
+        )
+
+        if len(scored) > 1:
+            print(
+                "[Template] Alternatives:",
+                ", ".join(
+                    f"{item[2].template_id}={item[0]:.4f}"
+                    for item in scored[1:]
+                )
+            )
+
+        return best[2]
 
     # ========================================================
     # PAGE METADATA
@@ -2697,7 +3073,8 @@ class OMRScanner:
         template = (
             self.resolve_template(
                 payload,
-                forced_template_id
+                forced_template_id,
+                image=image
             )
         )
 
@@ -2736,6 +3113,11 @@ class OMRScanner:
             )
         )
 
+        if not page_info["student"] and template.student:
+            page_info["student"] = dict(
+                template.student
+            )
+
         first_question = (
             page_info[
                 "first_question"
@@ -2750,17 +3132,24 @@ class OMRScanner:
 
         if question_count <= 0:
 
-            question_count = (
-                self.fallback_question_count(
-                    template
+            if template.question_count:
+                question_count = template.question_count
+                print(
+                    "[Page] Using template question count:",
+                    question_count
                 )
-            )
+            else:
+                question_count = (
+                    self.fallback_question_count(
+                        template
+                    )
+                )
 
-            print(
-                "[Page] "
-                "Using fallback capacity:",
-                question_count
-            )
+                print(
+                    "[Page] "
+                    "Using fallback capacity:",
+                    question_count
+                )
 
         print(
             "[Page]:",
@@ -3181,6 +3570,10 @@ class OMRScanner:
 
                 "column_gap": (
                     template.column_gap
+                ),
+
+                "question_count": (
+                    template.question_count
                 ),
             },
 
