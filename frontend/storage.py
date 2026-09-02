@@ -72,6 +72,20 @@ def import_students(project_id, csv_text):
     return response.json()
 
 
+def load_results(project_id):
+    response = requests.get(f"{API_URL}/projects/{project_id}/results", timeout=5)
+    response.raise_for_status()
+    return response.json()
+
+
+def export_results(project_id, output_path):
+    response = requests.get(f"{API_URL}/projects/{project_id}/results/export", timeout=10)
+    response.raise_for_status()
+    with open(output_path, "wb") as file:
+        file.write(response.content)
+    return output_path
+
+
 def rename_project(project_id, name):
     response = requests.patch(
         f"{API_URL}/projects/{project_id}",

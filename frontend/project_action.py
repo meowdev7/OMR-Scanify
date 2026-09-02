@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from tkinter import filedialog, messagebox
 import csv
 import requests
-from storage import get_project, update_answer_key
+from storage import export_results, get_project, import_students, update_answer_key
 
 from assets import asset_path
 
@@ -82,6 +82,59 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
         if on_back is not None:
             on_back()
 
+    def refresh_project_view():
+        nonlocal project
+        try:
+            project = get_project(project["id"])
+        except (KeyError, requests.RequestException):
+            return
+        if on_project_updated is not None:
+            on_project_updated(project)
+
+    def update_answer_key_panel():
+        for child in answer_key_panel.winfo_children():
+            child.destroy()
+
+        tk.Label(answer_key_panel, text="Answer Key", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16)
+        answer_key = project.get("answer_key") or []
+        if answer_key:
+            key_text = "    ".join(f"{index}: {answer}" for index, answer in enumerate(answer_key, start=1))
+            tk.Label(answer_key_panel, text=key_text, font=("Consolas", 10), fg=MUTED, bg=PANEL, wraplength=900, justify="left").pack(anchor="w", padx=16, pady=(8, 0))
+        else:
+            tk.Label(answer_key_panel, text="No answer key uploaded yet.", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", padx=16, pady=(8, 0))
+
+    def update_student_and_result_panels():
+        for child in student_summary_panel.winfo_children():
+            child.destroy()
+        for child in result_summary_panel.winfo_children():
+            child.destroy()
+
+        students = project.get("students") or []
+        results = []
+        try:
+            results = get_project(project["id"]).get("results") or []
+        except Exception:
+            results = []
+
+        tk.Label(student_summary_panel, text="Students", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16, pady=(14, 8))
+        if students:
+            for student in students[:6]:
+                labels = [student.get("name") or "Unnamed student", student.get("sheet_id") or "No sheet ID"]
+                tk.Label(student_summary_panel, text=f"• {labels[0]} ({labels[1]})", font=("Segoe UI", 9), fg=MUTED, bg=PANEL, justify="left", anchor="w").pack(anchor="w", padx=16, pady=2)
+            if len(students) > 6:
+                tk.Label(student_summary_panel, text=f"+ {len(students) - 6} more students", font=("Segoe UI", 8), fg="#4A99FF", bg=PANEL).pack(anchor="w", padx=16, pady=(4, 0))
+        else:
+            tk.Label(student_summary_panel, text="No students imported yet.", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", padx=16, pady=(6, 10))
+
+        tk.Label(result_summary_panel, text="Recent Results", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16, pady=(14, 8))
+        if results:
+            for result in results[:6]:
+                tk.Label(result_summary_panel, text=f"• {result.get('student_name', 'Unknown')} — {result.get('marks', 0)}/{result.get('total_questions', 0)}", font=("Segoe UI", 9), fg=MUTED, bg=PANEL, justify="left", anchor="w").pack(anchor="w", padx=16, pady=2)
+            if len(results) > 6:
+                tk.Label(result_summary_panel, text=f"+ {len(results) - 6} more results", font=("Segoe UI", 8), fg="#4A99FF", bg=PANEL).pack(anchor="w", padx=16, pady=(4, 0))
+        else:
+            tk.Label(result_summary_panel, text="No scanned submissions yet.", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", padx=16, pady=(6, 10))
+
     back_button = tk.Button(
         content,
         text="<-  Back to Projects",
@@ -121,7 +174,6 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     actions.grid_columnconfigure(0, weight=1)
     actions.grid_columnconfigure(1, weight=1)
 
-    _create_action_card(actions, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
     def upload_answer_key():
         filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
         if not filename:
@@ -130,24 +182,68 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
             with open(filename, "r", encoding="utf-8-sig", newline="") as file:
                 answers = parse_answer_key_csv(list(csv.reader(file)), project.get("question_count", 0))
             update_answer_key(project["id"], answers)
-            updated_project = get_project(project["id"])
+            refresh_project_view()
+            update_answer_key_panel()
+            update_student_and_result_panels()
             messagebox.showinfo("Answer key uploaded", "The answer key was saved to the backend.", parent=action_window.winfo_toplevel())
             if on_project_updated is not None:
-                on_project_updated(updated_project)
+                on_project_updated(project)
         except (OSError, ValueError, KeyError, requests.RequestException) as error:
             messagebox.showerror("Answer key upload failed", str(error), parent=action_window.winfo_toplevel())
 
-    _create_action_card(actions, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
+    def import_students_csv():
+        filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
+        if not filename:
+            return
+        try:
+            with open(filename, "r", encoding="utf-8-sig", newline="") as file:
+                csv_text = file.read()
+            imported = import_students(project["id"], csv_text)
+            refresh_project_view()
+            update_student_and_result_panels()
+            messagebox.showinfo("Students imported", f"{len(imported)} student(s) were imported successfully.", parent=action_window.winfo_toplevel())
+            if on_project_updated is not None:
+                on_project_updated(project)
+        except (OSError, ValueError, KeyError, requests.RequestException) as error:
+            messagebox.showerror("Student import failed", str(error), parent=action_window.winfo_toplevel())
 
-    answer_key_panel = tk.Frame(content, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
-    answer_key_panel.pack(fill="both", expand=True, pady=(12, 0), ipady=10)
-    tk.Label(answer_key_panel, text="Answer Key", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16)
-    answer_key = project.get("answer_key") or []
-    if answer_key:
-        key_text = "    ".join(f"{index}: {answer}" for index, answer in enumerate(answer_key, start=1))
-        tk.Label(answer_key_panel, text=key_text, font=("Consolas", 10), fg=MUTED, bg=PANEL, wraplength=900, justify="left").pack(anchor="w", padx=16, pady=(8, 0))
-    else:
-        tk.Label(answer_key_panel, text="No answer key uploaded yet.", font=("Segoe UI", 9), fg=MUTED, bg=PANEL).pack(anchor="w", padx=16, pady=(8, 0))
+    def export_results_csv():
+        if not project.get("id"):
+            return
+        filename = filedialog.asksaveasfilename(
+            parent=action_window.winfo_toplevel(),
+            title="Export results",
+            defaultextension=".csv",
+            initialfile=f"{project.get('name', 'project')}_results.csv",
+            filetypes=(("CSV files", "*.csv"),),
+        )
+        if not filename:
+            return
+        try:
+            export_results(project["id"], filename)
+            messagebox.showinfo("Results exported", f"The results were saved to:\n{filename}", parent=action_window.winfo_toplevel())
+        except (OSError, requests.RequestException) as error:
+            messagebox.showerror("Export failed", str(error), parent=action_window.winfo_toplevel())
+
+    _create_action_card(actions, 0, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
+    _create_action_card(actions, 0, 1, "⇩", "Import Students", "Bring in student records\nfrom a CSV file.", "Import Students", import_students_csv)
+    _create_action_card(actions, 1, 0, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
+    _create_action_card(actions, 1, 1, "⤓", "Export Results", "Download the project score report\nas CSV.", "Export Results", export_results_csv)
+
+    overview = tk.Frame(content, bg=BG)
+    overview.pack(fill="both", expand=True, pady=(14, 0))
+    overview.grid_columnconfigure(0, weight=1)
+    overview.grid_columnconfigure(1, weight=1)
+
+    answer_key_panel = tk.Frame(overview, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
+    answer_key_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 10))
+    student_summary_panel = tk.Frame(overview, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
+    student_summary_panel.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=(0, 10))
+    result_summary_panel = tk.Frame(overview, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
+    result_summary_panel.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(4, 0))
+
+    update_answer_key_panel()
+    update_student_and_result_panels()
 
     tip = tk.Frame(content, bg="#0B1423", highlightbackground=BORDER, highlightthickness=1)
     tip.pack(fill="x", pady=(12, 0), ipady=7)
@@ -157,9 +253,9 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     return action_window
 
 
-def _create_action_card(parent, column, icon, title, description, button_text, command=None):
+def _create_action_card(parent, row, column, icon, title, description, button_text, command=None):
     card = tk.Frame(parent, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
-    card.grid(row=0, column=column, sticky="nsew", padx=(0, 7) if column == 0 else (7, 0))
+    card.grid(row=row, column=column, sticky="nsew", padx=(0, 7) if column == 0 else (7, 0), pady=(0, 8))
     tk.Label(card, text=icon, font=("Segoe UI", 22, "bold"), fg="#DCEAFF", bg="#173B78", width=2, height=1).pack(pady=(10, 7))
     tk.Label(card, text=title, font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack()
     tk.Label(card, text=description, font=("Segoe UI", 8), fg=MUTED, bg=PANEL, justify="center").pack(pady=(4, 10))
