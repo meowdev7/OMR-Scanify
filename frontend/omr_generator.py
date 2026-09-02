@@ -149,11 +149,11 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             "qr_enabled": values["qr_enabled"].get(),
             "qr_position": "Top Right",
             "output_format": "PDF",
-            "header_name": bool(values["name"].get().strip()),
-            "header_class": bool(values["class_standard"].get().strip()),
-            "header_section": bool(values["section"].get().strip()),
-            "header_admission": bool(values["admission"].get().strip()),
-            "header_subject": bool(values["subject"].get().strip()),
+            "header_name": True,
+            "header_class": True,
+            "header_section": True,
+            "header_admission": True,
+            "header_subject": True,
         }
 
     def generate_preview():

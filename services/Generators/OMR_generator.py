@@ -1340,50 +1340,13 @@ class OMRGenerator:
         # Header fields
         # ----------------------------------------------------
 
-        fields = []
-
-        if self.config[
-            "header_name"
-        ]:
-
-            fields.append(
-                f"Name: {self.name}"
-            )
-
-        if self.config[
-            "header_class"
-        ]:
-
-            fields.append(
-                f"Class: "
-                f"{self.class_standard}"
-            )
-
-        if self.config[
-            "header_section"
-        ]:
-
-            fields.append(
-                f"Section: "
-                f"{self.class_division}"
-            )
-
-        if self.config[
-            "header_admission"
-        ]:
-
-            fields.append(
-                "Admission No: "
-                f"{self.admission_number}"
-            )
-
-        if self.config[
-            "header_subject"
-        ]:
-
-            fields.append(
-                f"Subject: {self.subject}"
-            )
+        fields = [
+            f"Name: {self.name}",
+            f"Class: {self.class_standard}",
+            f"Section: {self.class_division}",
+            f"Roll No: {self.admission_number}",
+            f"Subject: {self.subject}",
+        ]
 
         row_y = 290
 

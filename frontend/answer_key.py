@@ -43,6 +43,27 @@ def open_answer_key_editor(parent, project, on_saved=None):
     scrollbar.pack(side="right", fill="y", padx=(0, 24), pady=(0, 14))
     content.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
 
+    editor_bind_tag = "AnswerKeyEditor"
+
+    def scroll_questions(event):
+        event_number = getattr(event, "num", None)
+        if event_number == 4:
+            canvas.yview_scroll(-3, "units")
+        elif event_number == 5:
+            canvas.yview_scroll(3, "units")
+        else:
+            canvas.yview_scroll(-int(event.delta / 120), "units")
+        return "break"
+
+    dialog.bind_class(editor_bind_tag, "<MouseWheel>", scroll_questions)
+    dialog.bind_class(editor_bind_tag, "<Button-4>", scroll_questions)
+    dialog.bind_class(editor_bind_tag, "<Button-5>", scroll_questions)
+
+    def add_editor_bind_tag(widget):
+        widget.bindtags((editor_bind_tag,) + widget.bindtags())
+        for child in widget.winfo_children():
+            add_editor_bind_tag(child)
+
     variables = []
     for index in range(question_count):
         row = tk.Frame(content, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
@@ -52,6 +73,8 @@ def open_answer_key_editor(parent, project, on_saved=None):
         variables.append(variable)
         for choice in CHOICES:
             tk.Radiobutton(row, text=choice, value=choice, variable=variable, indicatoron=False, width=4, font=("Segoe UI", 9, "bold"), fg=TEXT, bg="#172338", selectcolor=BLUE, activebackground="#234A86", activeforeground=TEXT, relief="flat", bd=0).pack(side="left", padx=3, pady=6)
+
+    add_editor_bind_tag(content)
 
     def save():
         selected = [variable.get() for variable in variables]
@@ -67,10 +90,17 @@ def open_answer_key_editor(parent, project, on_saved=None):
         except (KeyError, requests.RequestException) as error:
             messagebox.showerror("Answer key save failed", str(error), parent=dialog)
 
+    def reset_answers():
+        if not messagebox.askyesno("Reset answer key", "Clear all selected answers?", parent=dialog):
+            return
+        for variable in variables:
+            variable.set("")
+
     footer = tk.Frame(dialog, bg=BG)
     footer.pack(fill="x", padx=24, pady=(0, 20))
     tk.Button(footer, text="Cancel", command=dialog.destroy, font=("Segoe UI", 9), fg=MUTED, bg=BG, activebackground=BG, activeforeground=TEXT, relief="flat", bd=0, padx=12, pady=7).pack(side="right", padx=(8, 0))
     tk.Button(footer, text="Save Answer Key", command=save, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, padx=14, pady=7).pack(side="right")
+    tk.Button(footer, text="Reset", command=reset_answers, font=("Segoe UI", 9), fg="#FFB4B4", bg=BG, activebackground=BG, activeforeground="#FFD1D1", relief="flat", bd=0, padx=12, pady=7).pack(side="left")
 
 
 def answer_key_menu(parent, project, on_changed=None):
