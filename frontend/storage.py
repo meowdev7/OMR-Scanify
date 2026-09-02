@@ -115,3 +115,12 @@ def update_project(project_id, name=None, question_count=None):
     )
     response.raise_for_status()
     return response.json()
+
+
+def delete_answer_key(project_id):
+    response = requests.delete(
+        f"{API_URL}/projects/{project_id}/answer-key",
+        timeout=5,
+    )
+    response.raise_for_status()
+    return response.json()

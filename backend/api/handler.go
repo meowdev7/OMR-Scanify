@@ -409,6 +409,28 @@ func UpdateAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func DeleteAnswerKeyHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeJSONError(w, http.StatusBadRequest, "Missing project id in path")
+		return
+	}
+
+	p := project.GetProjectByID(id)
+	if p == nil {
+		writeJSONError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	p.AnswerKey = nil
+	if err := storage.SaveProjects(project.Projects); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Failed to save project")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "answer key deleted"})
+}
+
 // ImportStudentsHandler handles POST /api/v1/projects/{id}/students/import
 // CSV body
 

@@ -7,6 +7,7 @@ import requests
 from assets import asset_path
 from project_action import parse_answer_key_csv
 from storage import export_results, get_project, import_students, load_results, update_answer_key
+from answer_key import answer_key_menu, open_answer_key_editor
 
 BG = "#080D17"
 PANEL = "#101722"
@@ -71,6 +72,13 @@ def create_project_details_page(parent, project, on_back=None, on_generate_omr=N
             except (OSError, ValueError, KeyError, requests.RequestException) as error:
                 messagebox.showerror("Answer key upload failed", str(error))
 
+        def create_answer_key():
+            open_answer_key_editor(page, page.project, refresh_project_data)
+
+        def show_answer_key_menu(button):
+            menu = answer_key_menu(button, page.project, refresh_project_data)
+            menu.post(button.winfo_rootx(), button.winfo_rooty() + button.winfo_height())
+
         def import_students_csv():
             filename = filedialog.askopenfilename(filetypes=(("CSV files", "*.csv"),))
             if not filename:
@@ -114,7 +122,12 @@ def create_project_details_page(parent, project, on_back=None, on_generate_omr=N
 
         tk.Button(actions, text="Generate OMR", command=lambda: on_generate_omr(page.project) if on_generate_omr else None, **button_kwargs).pack(side="left", padx=(0, 8))
         tk.Button(actions, text="Import Students", command=import_students_csv, **button_kwargs).pack(side="left", padx=(0, 8))
+        tk.Button(actions, text="Create Answer Key", command=create_answer_key, **button_kwargs).pack(side="left", padx=(0, 8))
         tk.Button(actions, text="Upload Answer Key", command=upload_answer_key, **button_kwargs).pack(side="left", padx=(0, 8))
+        if page.project.get("answer_key"):
+            menu_button = tk.Button(actions, text="...", font=("Segoe UI", 10, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, padx=12, pady=6)
+            menu_button.pack(side="left")
+            menu_button.configure(command=lambda: answer_key_menu(menu_button, page.project, refresh_project_data).post(menu_button.winfo_rootx(), menu_button.winfo_rooty() + menu_button.winfo_height()))
         tk.Button(actions, text="Export Results", command=export_results_csv, **button_kwargs).pack(side="left")
 
         stats = tk.Frame(page, bg=BG)

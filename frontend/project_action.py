@@ -4,6 +4,7 @@ from tkinter import filedialog, messagebox
 import csv
 import requests
 from storage import export_results, get_project, import_students, update_answer_key
+from answer_key import answer_key_menu, open_answer_key_editor
 
 from assets import asset_path
 
@@ -95,9 +96,13 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
         for child in answer_key_panel.winfo_children():
             child.destroy()
 
-        tk.Label(answer_key_panel, text="Answer Key", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=16)
+        heading = tk.Frame(answer_key_panel, bg=PANEL)
+        heading.pack(fill="x", padx=16)
+        tk.Label(heading, text="Answer Key", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack(side="left")
         answer_key = project.get("answer_key") or []
         if answer_key:
+            menu = answer_key_menu(answer_key_panel, project, lambda: (refresh_project_view(), update_answer_key_panel()))
+            tk.Button(heading, text="...", command=lambda: menu.post(heading.winfo_rootx() + heading.winfo_width() - 12, heading.winfo_rooty() + heading.winfo_height()), font=("Segoe UI", 10, "bold"), fg=MUTED, bg=PANEL, activebackground="#172338", activeforeground=TEXT, relief="flat", bd=0, width=3).pack(side="right")
             key_text = "    ".join(f"{index}: {answer}" for index, answer in enumerate(answer_key, start=1))
             tk.Label(answer_key_panel, text=key_text, font=("Consolas", 10), fg=MUTED, bg=PANEL, wraplength=900, justify="left").pack(anchor="w", padx=16, pady=(8, 0))
         else:
@@ -193,6 +198,9 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
         except (OSError, ValueError, KeyError, requests.RequestException) as error:
             messagebox.showerror("Answer key upload failed", str(error), parent=action_window.winfo_toplevel())
 
+    def create_answer_key():
+        open_answer_key_editor(action_window, project, lambda: (refresh_project_view(), update_answer_key_panel(), on_project_updated(project) if on_project_updated else None))
+
     def import_students_csv():
         filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
         if not filename:
@@ -227,10 +235,12 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
         except (OSError, requests.RequestException) as error:
             messagebox.showerror("Export failed", str(error), parent=action_window.winfo_toplevel())
 
+    actions.grid_rowconfigure(2, weight=1)
     _create_action_card(actions, 0, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
     _create_action_card(actions, 0, 1, "⇩", "Import Students", "Bring in student records\nfrom a CSV file.", "Import Students", import_students_csv)
-    _create_action_card(actions, 1, 0, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
-    _create_action_card(actions, 1, 1, "⤓", "Export Results", "Download the project score report\nas CSV.", "Export Results", export_results_csv)
+    _create_action_card(actions, 1, 0, "✎", "Create Answer Key", "Fill the answer key\nwith the OMR layout.", "Create Answer Key", create_answer_key)
+    _create_action_card(actions, 1, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
+    _create_action_card(actions, 2, 0, "⤓", "Export Results", "Download the project score report\nas CSV.", "Export Results", export_results_csv)
 
     overview = tk.Frame(content, bg=BG)
     overview.pack(fill="both", expand=True, pady=(14, 0))
