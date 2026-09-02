@@ -5,6 +5,7 @@ from sidebar import create_sidebar
 from projects import create_projects_page
 from assets import asset_path
 from project_action import create_project_action_window
+from project_details import create_project_details_page
 from omr_generator import create_omr_generator_page
 from settings import create_settings_page
 from storage import get_project, load_theme_preference, save_theme_preference
@@ -36,6 +37,27 @@ def show_project_actions(project):
     hide_extra_pages()
     action_page = create_project_action_window(content_frame, project, show_projects, show_generator, show_project_actions)
     action_page.pack(side="left", fill="both", expand=True)
+    apply_theme(window, theme_mode)
+
+
+def show_project_details(project):
+    global current_project, project_details_page
+    try:
+        project = get_project(project["id"])
+    except (KeyError, requests.RequestException):
+        pass
+    current_project = project
+    dashboard_frame.pack_forget()
+    projects_page.pack_forget()
+    settings_page.pack_forget()
+    hide_extra_pages()
+    if project_details_page is None:
+        project_details_page = create_project_details_page(content_frame, project, show_projects, show_generator, on_project_updated=on_project_updated)
+    else:
+        project_details_page.project = project
+        project_details_page.destroy()
+        project_details_page = create_project_details_page(content_frame, project, show_projects, show_generator, on_project_updated=on_project_updated)
+    project_details_page.pack(side="left", fill="both", expand=True)
     apply_theme(window, theme_mode)
 
 def card_enter(event=None):
@@ -94,10 +116,11 @@ def show_generator(project=None):
     projects_page.pack_forget()
     settings_page.pack_forget()
     hide_extra_pages()
-    generator_page.set_project(current_project)
+    if generator_page is not None:
+        generator_page.set_project(current_project)
     generator_page.pack(side="left", fill="both", expand=True)
     apply_theme(window, theme_mode)
-    if current_project is None:
+    if current_project is None and generator_page is not None:
         generator_page.show_no_project_dialog()
 
 
@@ -118,6 +141,8 @@ def hide_extra_pages():
         action_page.pack_forget()
     if generator_page is not None:
         generator_page.pack_forget()
+    if project_details_page is not None:
+        project_details_page.pack_forget()
 
 
 window = Tk()
@@ -134,6 +159,7 @@ theme_mode = load_theme_preference()
 window._theme_mode = theme_mode
 action_page = None
 generator_page = None
+project_details_page = None
 current_project = None
 sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator, show_settings)
 
