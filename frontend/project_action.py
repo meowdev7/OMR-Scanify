@@ -170,9 +170,11 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     tk.Label(content, text="Choose an action", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG).pack(anchor="w", pady=(14, 7))
 
     actions = tk.Frame(content, bg=BG)
-    actions.pack(fill="x")
+    actions.pack(fill="both", expand=True)
     actions.grid_columnconfigure(0, weight=1)
     actions.grid_columnconfigure(1, weight=1)
+    actions.grid_rowconfigure(0, weight=1)
+    actions.grid_rowconfigure(1, weight=1)
 
     def upload_answer_key():
         filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
@@ -254,9 +256,45 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
 
 
 def _create_action_card(parent, row, column, icon, title, description, button_text, command=None):
-    card = tk.Frame(parent, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
-    card.grid(row=row, column=column, sticky="nsew", padx=(0, 7) if column == 0 else (7, 0), pady=(0, 8))
-    tk.Label(card, text=icon, font=("Segoe UI", 22, "bold"), fg="#DCEAFF", bg="#173B78", width=2, height=1).pack(pady=(10, 7))
-    tk.Label(card, text=title, font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL).pack()
-    tk.Label(card, text=description, font=("Segoe UI", 8), fg=MUTED, bg=PANEL, justify="center").pack(pady=(4, 10))
-    tk.Button(card, text=button_text, command=command, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", activeforeground="white", relief="flat", bd=0, padx=13, pady=5, cursor="hand2").pack(pady=(0, 10))
+    def trigger_action(event=None):
+        if callable(command):
+            command()
+
+    card = tk.Frame(parent, bg=PANEL, highlightbackground=BORDER, highlightthickness=1, cursor="hand2")
+    card.grid(
+        row=row,
+        column=column,
+        sticky="nsew",
+        padx=(0, 7) if column == 0 else (7, 0),
+        pady=(0, 8),
+    )
+
+    icon_label = tk.Label(card, text=icon, font=("Segoe UI", 22, "bold"), fg="#DCEAFF", bg="#173B78", width=2, height=1)
+    title_label = tk.Label(card, text=title, font=("Segoe UI", 11, "bold"), fg=TEXT, bg=PANEL)
+    desc_label = tk.Label(card, text=description, font=("Segoe UI", 8), fg=MUTED, bg=PANEL, justify="center")
+
+    icon_label.pack(pady=(12, 7))
+    title_label.pack()
+    desc_label.pack(pady=(4, 10))
+
+    button = tk.Button(
+        card,
+        text=button_text,
+        command=trigger_action,
+        font=("Segoe UI", 9, "bold"),
+        fg="white",
+        bg=BLUE,
+        activebackground="#2B7CF0",
+        activeforeground="white",
+        relief="flat",
+        bd=0,
+        padx=13,
+        pady=5,
+        cursor="hand2",
+    )
+    button.pack(fill="x", padx=18, pady=(0, 12))
+
+    for widget in (card, icon_label, title_label, desc_label):
+        widget.bind("<Button-1>", trigger_action)
+        widget.bind("<Enter>", lambda event, target=card: target.configure(highlightbackground="#3E7DF5"))
+        widget.bind("<Leave>", lambda event, target=card: target.configure(highlightbackground=BORDER))
