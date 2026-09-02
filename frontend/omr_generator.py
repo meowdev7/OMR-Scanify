@@ -64,6 +64,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     settings.pack_propagate(False)
     preview = tk.Frame(body, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
     preview.pack(side="left", fill="both", expand=True)
+    preview.pack_propagate(False)
 
     tk.Label(settings, text="Generator Settings", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=12, pady=(10, 6))
     _select_row(settings, "Page Size", values["page_size"], ("A4", "A5", "A3", "Letter", "Legal"))
@@ -82,14 +83,43 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     _entry_grid_row(student_grid, "Section", values["section"], 1, 1)
     _entry_grid_row(student_grid, "Admission Number", values["admission"], 2, 0, column_span=2)
     _entry_grid_row(student_grid, "Subject", values["subject"], 3, 0, column_span=2)
-    tk.Checkbutton(settings, text="Include QR code", variable=values["qr_enabled"], fg=MUTED, bg=PANEL, activebackground=PANEL, activeforeground=TEXT, selectcolor=INPUT).pack(anchor="w", padx=9, pady=(2, 2))
 
-    generate_button = tk.Button(settings, text="Generate OMR", command=lambda: generate_omr(), font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, pady=7, cursor="hand2")
-    generate_button.pack(fill="x", padx=12, pady=(3, 5))
+    action_block = tk.Frame(settings, bg=PANEL)
+    action_block.pack(fill="x", padx=12, pady=(8, 2))
 
-    tk.Label(preview, text="Live Preview", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=PANEL).pack(anchor="w", padx=12, pady=(12, 4))
-    image_label = tk.Label(preview, text="Generate a preview to see the answer sheet.", font=("Segoe UI", 10), fg=MUTED, bg=PANEL)
-    image_label.pack(fill="both", expand=True, padx=12, pady=12)
+    generate_button = tk.Button(
+        action_block,
+        text="Generate OMR",
+        command=lambda: generate_omr(),
+        font=("Segoe UI", 9, "bold"),
+        fg="white",
+        bg=BLUE,
+        activebackground="#2B7CF0",
+        relief="flat",
+        bd=0,
+        pady=7,
+        cursor="hand2",
+    )
+    generate_button.pack(fill="x", pady=(0, 8), ipady=2)
+
+    tk.Checkbutton(
+        action_block,
+        text="Include QR code",
+        variable=values["qr_enabled"],
+        fg=MUTED,
+        bg=PANEL,
+        activebackground=PANEL,
+        activeforeground=TEXT,
+        selectcolor=INPUT,
+        justify="left",
+    ).pack(anchor="w")
+
+    preview_header = tk.Label(preview, text="Live Preview", font=("Segoe UI", 10, "bold"), fg=TEXT, bg=PANEL)
+    preview_header.pack(anchor="w", padx=12, pady=(12, 4))
+    image_container = tk.Frame(preview, bg=PANEL)
+    image_container.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+    image_label = tk.Label(image_container, text="Generate a preview to see the answer sheet.", font=("Segoe UI", 10), fg=MUTED, bg=PANEL)
+    image_label.pack(fill="both", expand=True)
 
     def make_config():
         try:
