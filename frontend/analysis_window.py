@@ -31,10 +31,22 @@ def open_analysis_window(parent, project, results=None, failures=None):
 
     summary = tk.Frame(window, bg=palette["window"])
     summary.pack(fill="x", padx=22, pady=(0, 12))
-    _summary_value(summary, "Analyzed", str(len(results)), 0, palette)
-    _summary_value(summary, "Failed", str(len(failures)), 1, palette)
-    _summary_value(summary, "Questions", str(project.get("question_count", 0)), 2, palette)
-    for column in range(3):
+    summary_metrics = (
+        ("Analyzed", str(len(results))),
+        ("Failed", str(len(failures))),
+        ("Questions", str(project.get("question_count", 0))),
+    )
+    if results:
+        first_result = results[0]
+        summary_metrics += (
+            ("Score", f"{first_result.get('marks', 0)}/{first_result.get('total_questions', 0)}"),
+            ("Correct", str(first_result.get("correct", 0))),
+            ("Incorrect", str(first_result.get("incorrect", 0))),
+            ("Unattempted", str(first_result.get("unattempted", 0))),
+        )
+    for index, (label, value) in enumerate(summary_metrics):
+        _summary_value(summary, label, value, index % 4, index // 4, palette)
+    for column in range(4):
         summary.grid_columnconfigure(column, weight=1)
 
     if failures:
@@ -86,7 +98,7 @@ def open_analysis_window(parent, project, results=None, failures=None):
             return
         result = results[index]
         identity.configure(text=f"{result.get('student_name', 'Unknown student')}  |  {result.get('sheet_id', '-')}")
-        score.configure(text=f"Marks {result.get('marks', 0)}/{result.get('total_questions', 0)}    Correct {result.get('correct', 0)}    Incorrect {result.get('incorrect', 0)}    Unattempted {result.get('unattempted', 0)}")
+        score.configure(text=f"Score: {result.get('marks', 0)}/{result.get('total_questions', 0)}    Correct {result.get('correct', 0)}    Incorrect {result.get('incorrect', 0)}    Unattempted {result.get('unattempted', 0)}")
         table.delete(*table.get_children())
         for question in result.get("questions") or []:
             scanned = question.get("scanned_answer") or "-"
@@ -108,8 +120,8 @@ def open_analysis_window(parent, project, results=None, failures=None):
     return window
 
 
-def _summary_value(parent, label, value, column, palette):
+def _summary_value(parent, label, value, column, row, palette):
     card = tk.Frame(parent, bg=palette["panel"], highlightbackground=palette["border"], highlightthickness=1)
-    card.grid(row=0, column=column, sticky="ew", padx=(0, 8) if column < 2 else 0)
+    card.grid(row=row, column=column, sticky="ew", padx=(0, 8) if column < 3 else 0, pady=(0, 8) if row == 0 else 0)
     tk.Label(card, text=label, font=("Segoe UI", 8), fg=palette["muted"], bg=palette["panel"]).pack(anchor="w", padx=12, pady=(8, 1))
     tk.Label(card, text=value, font=("Segoe UI", 16, "bold"), fg=palette["text"], bg=palette["panel"]).pack(anchor="w", padx=12, pady=(0, 8))

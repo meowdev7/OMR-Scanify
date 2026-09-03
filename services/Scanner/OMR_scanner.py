@@ -2335,9 +2335,9 @@ class BubbleReader:
 
     def __init__(
         self,
-        blank_threshold=0.055,
+        blank_threshold=0.30,
         ambiguity_margin=0.020,
-        mark_threshold=0.18
+        mark_threshold=0.30
     ):
 
         self.blank_threshold = (
