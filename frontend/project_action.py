@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from tkinter import filedialog, messagebox
 import csv
 import requests
-from storage import export_results, get_project, import_students, update_answer_key
+from storage import get_project, load_results, update_answer_key
 from answer_key import answer_key_menu, open_answer_key_editor
 from answer_sheet_workflow import choose_and_process_answer_sheets
+from analysis_window import open_analysis_window
 
 from assets import asset_path
 
@@ -208,53 +209,22 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
             update_student_and_result_panels()
             if on_project_updated is not None:
                 on_project_updated(project)
-            message = f"{len(submitted)} answer sheet(s) analyzed successfully."
-            if failures:
-                message += f"\n\n{len(failures)} file(s) failed and were skipped."
-            messagebox.showinfo("Answer sheet analysis complete", message, parent=action_window.winfo_toplevel())
+            open_analysis_window(action_window, project, submitted, failures)
 
         choose_and_process_answer_sheets(action_window, project, completed)
 
-    def import_students_csv():
-        filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
-        if not filename:
-            return
+    def open_saved_analysis():
         try:
-            with open(filename, "r", encoding="utf-8-sig", newline="") as file:
-                csv_text = file.read()
-            imported = import_students(project["id"], csv_text)
-            refresh_project_view()
-            update_student_and_result_panels()
-            messagebox.showinfo("Students imported", f"{len(imported)} student(s) were imported successfully.", parent=action_window.winfo_toplevel())
-            if on_project_updated is not None:
-                on_project_updated(project)
-        except (OSError, ValueError, KeyError, requests.RequestException) as error:
-            messagebox.showerror("Student import failed", str(error), parent=action_window.winfo_toplevel())
-
-    def export_results_csv():
-        if not project.get("id"):
-            return
-        filename = filedialog.asksaveasfilename(
-            parent=action_window.winfo_toplevel(),
-            title="Export results",
-            defaultextension=".csv",
-            initialfile=f"{project.get('name', 'project')}_results.csv",
-            filetypes=(("CSV files", "*.csv"),),
-        )
-        if not filename:
-            return
-        try:
-            export_results(project["id"], filename)
-            messagebox.showinfo("Results exported", f"The results were saved to:\n{filename}", parent=action_window.winfo_toplevel())
-        except (OSError, requests.RequestException) as error:
-            messagebox.showerror("Export failed", str(error), parent=action_window.winfo_toplevel())
+            results = load_results(project["id"])
+            open_analysis_window(action_window, project, results)
+        except (KeyError, requests.RequestException) as error:
+            messagebox.showerror("Analysis unavailable", str(error), parent=action_window.winfo_toplevel())
 
     actions.grid_rowconfigure(2, weight=1)
     _create_action_card(actions, 0, 0, "▣", "Create OMR", "Generate OMR sheet for\nthis project.", "Create OMR", on_create_omr)
-    _create_action_card(actions, 0, 1, "⇩", "Import Students", "Bring in student records\nfrom a CSV file.", "Import Students", import_students_csv)
     _create_action_card(actions, 1, 0, "✎", "Create Answer Key", "Fill the answer key\nwith the OMR layout.", "Create Answer Key", create_answer_key)
     _create_action_card(actions, 1, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
-    _create_action_card(actions, 2, 0, "⤓", "Export Results", "Download the project score report\nas CSV.", "Export Results", export_results_csv)
+    _create_action_card(actions, 2, 0, "◌", "Analyze Results", "Review submitted sheets\nand question-level results.", "Analyze Results", lambda: open_saved_analysis())
     _create_action_card(actions, 2, 1, "⇧", "Upload Answer Sheets", "Analyze student sheets\nfrom PNG or JPEG files.", "Upload Answer Sheets", upload_answer_sheets)
 
     overview = tk.Frame(content, bg=BG)

@@ -101,8 +101,13 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	student := project.GetStudentBySheetID(p, submission.SheetID)
 	if student == nil {
-		writeJSONError(w, http.StatusNotFound, "Student not found")
-		return
+		if submission.Student.ID == "" || submission.Student.Name == "" {
+			writeJSONError(w, http.StatusBadRequest, "Sheet QR code is missing student identity")
+			return
+		}
+		submission.Student.SheetID = submission.SheetID
+		p.Students = append(p.Students, submission.Student)
+		student = &p.Students[len(p.Students)-1]
 	}
 
 	if len(p.AnswerKey) == 0 {
@@ -167,6 +172,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		Unattempted:    unattempted,
 		Marks:          marks,
 		TotalQuestions: p.QuestionCount,
+		Questions:      buildQuestionResults(submission, checkedAnswers, p.AnswerKey),
 	}
 
 	project.AddResultToProject(p, result)
@@ -181,6 +187,28 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+func buildQuestionResults(submission models.Submission, statuses []string, answerKey []string) []models.QuestionResult {
+	scans := make(map[int]models.Scan, len(submission.Scan))
+	for _, scan := range submission.Scan {
+		scans[scan.Question] = scan
+	}
+
+	questions := make([]models.QuestionResult, len(answerKey))
+	for index, correctAnswer := range answerKey {
+		question := index + 1
+		scan := scans[question]
+		questions[index] = models.QuestionResult{
+			Question:      question,
+			CorrectAnswer: correctAnswer,
+			ScannedAnswer: scan.Answer,
+			Status:        statuses[index],
+			Confidence:    scan.Confidence,
+			Page:          scan.Page,
+		}
+	}
+	return questions
 }
 
 // CreateProjectHandler handles POST /api/v1/projects

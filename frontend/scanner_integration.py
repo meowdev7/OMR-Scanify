@@ -29,20 +29,32 @@ def scan_answer_sheet_files(files, question_count, templates_directory=None, deb
             sheet_id = str(pages[0].get("sheet_id", "")).strip()
             if not sheet_id:
                 raise ValueError("No student ID was found in the sheet QR code.")
+            student = normalize_student(pages[0].get("student"))
 
             answers_by_question = {}
+            scan_details = []
             for page in pages:
                 if str(page.get("sheet_id", "")).strip() != sheet_id:
                     raise ValueError("The uploaded pages contain different student IDs.")
+                if normalize_student(page.get("student")) != student:
+                    raise ValueError("The uploaded pages contain different student details.")
                 for question in page.get("questions") or []:
-                    answers_by_question[int(question["question"])] = normalize_answer(question.get("answer"))
+                    question_number = int(question["question"])
+                    answer = normalize_answer(question.get("answer"))
+                    answers_by_question[question_number] = answer
+                    scan_details.append({
+                        "question": question_number,
+                        "answer": answer,
+                        "confidence": float(question.get("confidence") or 0),
+                        "page": int(page.get("page", 1)),
+                    })
 
             answers = [answers_by_question.get(number) for number in range(1, int(question_count) + 1)]
             missing_questions = [number for number in range(1, int(question_count) + 1) if number not in answers_by_question]
             if missing_questions:
                 raise ValueError(f"The scan is missing question(s): {', '.join(map(str, missing_questions[:8]))}.")
 
-            submissions.append({"file": str(path), "sheet_id": sheet_id, "answers": answers})
+            submissions.append({"file": str(path), "sheet_id": sheet_id, "student": student, "answers": answers, "scan": scan_details})
         except Exception as error:
             failures.append({"file": str(path), "error": str(error)})
 
@@ -56,3 +68,17 @@ def normalize_answer(value):
     if answer not in {"A", "B", "C", "D"}:
         raise ValueError(f"Unsupported scanned answer '{answer}'.")
     return answer
+
+
+def normalize_student(value):
+    student = value if isinstance(value, dict) else {}
+    details = {
+        "id": str(student.get("id", "")).strip(),
+        "name": str(student.get("name", "")).strip(),
+        "class": str(student.get("class", "")).strip(),
+        "section": str(student.get("section", "")).strip(),
+        "roll_no": str(student.get("roll_no", student.get("admission", ""))).strip(),
+    }
+    if not details["id"] or not details["name"]:
+        raise ValueError("The sheet QR code does not contain a student ID and name.")
+    return details

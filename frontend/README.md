@@ -135,7 +135,7 @@ Response (200):
   "project_id": "proj-12345"
 }
 ```
-**Frontend Usage**: `storage.py:import_students()` - Called from project action page or project details.
+**Frontend Usage**: `storage.py:import_students()` - Retained for compatibility; normal scanning retrieves student details from the sheet QR code.
 
 ### Answer Key Management
 
@@ -270,11 +270,13 @@ Response (200):
 }
 ```
 
-Student roster CSV files are imported through the `Import Students` action. PNG,
-JPG, and JPEG answer sheets are uploaded through `Upload Answer Sheets`; the
-scanner reads each QR-coded sheet, submits the answers to this endpoint, and
-refreshes the project results. Multiple image files can be selected at once,
-and failed files are reported without stopping the rest of the batch.
+PNG, JPG, and JPEG answer sheets are uploaded through `Upload Answer Sheets`.
+The scanner reads each QR-coded sheet, sends the embedded student details and
+answers to the backend, and the backend evaluates and stores the result. The
+student is added to the project automatically; a roster CSV is not required.
+Multiple image files can be selected at once. After processing, the Analysis
+window shows the batch summary, failed files, and question-level results. Saved
+results can be reopened later from the project analysis action.
 
 ## Directory Contents
 

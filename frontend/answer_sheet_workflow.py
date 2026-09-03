@@ -33,7 +33,15 @@ def choose_and_process_answer_sheets(parent, project, on_complete=None):
             submitted = []
             for submission in submissions:
                 try:
-                    submitted.append(submit_submission(project["id"], submission["sheet_id"], submission["answers"]))
+                    submitted.append(
+                        submit_submission(
+                            project["id"],
+                            submission["sheet_id"],
+                            submission["answers"],
+                            submission.get("student"),
+                            submission.get("scan"),
+                        )
+                    )
                 except (KeyError, requests.RequestException) as error:
                     failures.append({"file": submission["file"], "error": str(error)})
             parent.after(0, finish, submitted, failures, None)

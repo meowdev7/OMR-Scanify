@@ -7,15 +7,19 @@ import zlib
 from pathlib import Path
 
 import cv2
-try:
-    import pymupdf as fitz
-except ImportError:
-    import fitz
 import numpy as np
 
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+
+
+def _load_pdf_library():
+    try:
+        import pymupdf as pdf_library
+    except ImportError:
+        import fitz as pdf_library
+    return pdf_library
 
 
 # ============================================================
@@ -3632,18 +3636,20 @@ def render_pdf_page(
     page_index
 ):
 
+    pdf_library = _load_pdf_library()
+
     page = document.load_page(
         page_index
     )
 
-    matrix = fitz.Matrix(
+    matrix = pdf_library.Matrix(
         PDF_SCALE,
         PDF_SCALE
     )
 
     pixmap = page.get_pixmap(
         matrix=matrix,
-        colorspace=fitz.csRGB,
+        colorspace=pdf_library.csRGB,
         alpha=False
     )
 
@@ -3920,7 +3926,8 @@ def scan_pdf_file(
         "========================================"
     )
 
-    document = fitz.open(
+    pdf_library = _load_pdf_library()
+    document = pdf_library.open(
         str(input_file)
     )
 
