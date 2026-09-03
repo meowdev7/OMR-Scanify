@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-def create_sidebar(window, show_dashboard, show_projects, show_generator=None, show_settings=None):
+def create_sidebar(window, show_dashboard, show_projects, show_settings=None):
 
     # Main sidebar
     sidebar = tk.Frame(
@@ -66,9 +66,6 @@ def create_sidebar(window, show_dashboard, show_projects, show_generator=None, s
 
     # Projects navigation
     projects_button = create_nav_button("Projects", show_projects)
-
-    if show_generator is not None:
-        create_nav_button("OMR Generator", show_generator)
 
     if show_settings is not None:
         create_nav_button("Settings", show_settings, side="bottom")

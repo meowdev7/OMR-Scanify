@@ -142,7 +142,7 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
 
     back_button = tk.Button(
         content,
-        text="<-  Back to Projects",
+        text="Back",
         font=("Segoe UI", 9),
         fg="#4A99FF",
         bg=BG,

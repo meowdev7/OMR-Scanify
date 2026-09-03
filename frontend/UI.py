@@ -52,11 +52,11 @@ def show_project_details(project):
     settings_page.pack_forget()
     hide_extra_pages()
     if project_details_page is None:
-        project_details_page = create_project_details_page(content_frame, project, show_projects, show_generator, on_project_updated=on_project_updated)
+        project_details_page = create_project_details_page(content_frame, project, lambda: show_project_actions(current_project), show_generator, on_project_updated=on_project_updated)
     else:
         project_details_page.project = project
         project_details_page.destroy()
-        project_details_page = create_project_details_page(content_frame, project, show_projects, show_generator, on_project_updated=on_project_updated)
+        project_details_page = create_project_details_page(content_frame, project, lambda: show_project_actions(current_project), show_generator, on_project_updated=on_project_updated)
     project_details_page.pack(side="left", fill="both", expand=True)
     apply_theme(window, theme_mode)
 
@@ -120,14 +120,6 @@ def show_generator(project=None):
         generator_page.set_project(current_project)
     generator_page.pack(side="left", fill="both", expand=True)
     apply_theme(window, theme_mode)
-    if current_project is None and generator_page is not None:
-        generator_page.show_no_project_dialog()
-
-
-def on_generator_project_created(project):
-    global current_project
-    current_project = project
-    projects_page.refresh_projects()
 
 
 def on_project_updated(project):
@@ -161,7 +153,7 @@ action_page = None
 generator_page = None
 project_details_page = None
 current_project = None
-sidebar = create_sidebar(window, show_dashboard, show_projects, show_generator, show_settings)
+sidebar = create_sidebar(window, show_dashboard, show_projects, show_settings)
 
 content_frame = Frame(window, bg="black")
 content_frame.pack(side="left", fill="both", expand=True)
@@ -173,8 +165,7 @@ projects_page = create_projects_page(content_frame, start_scan, show_project_act
 generator_page = create_omr_generator_page(
     content_frame,
     current_project,
-    on_back=show_projects,
-    on_project_created=on_generator_project_created,
+    on_back=lambda selected_project=None: show_project_actions(selected_project or current_project),
     on_project_updated=on_project_updated,
 )
 settings_page = create_settings_page(content_frame, theme_mode, on_theme_changed)

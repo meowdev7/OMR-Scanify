@@ -44,13 +44,14 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         "class_standard": tk.StringVar(value=""),
         "section": tk.StringVar(value=""),
         "admission": tk.StringVar(value=""),
-        "subject": tk.StringVar(value=project.get("name", "") if project else ""),
+        "title": tk.StringVar(value=project.get("name", "") if project else ""),
+        "subject": tk.StringVar(value=""),
         "qr_enabled": tk.BooleanVar(value=True),
     }
 
     header = tk.Frame(page, bg=BG)
     header.pack(fill="x", padx=12, pady=(15, 9))
-    tk.Button(header, text="<-  Back to Projects", command=on_back, font=("Segoe UI", 9), fg="#4A99FF", bg=BG, activeforeground="#78B3FF", activebackground=BG, relief="flat", bd=0, cursor="hand2").pack(anchor="w")
+    tk.Button(header, text="Back", command=on_back, font=("Segoe UI", 9), fg="#4A99FF", bg=BG, activeforeground="#78B3FF", activebackground=BG, relief="flat", bd=0, cursor="hand2").pack(anchor="w")
     tk.Label(header, text="OMR Generator", font=("Segoe UI", 18, "bold"), fg=TEXT, bg=BG).pack(anchor="w", pady=(6, 0))
     project_label = tk.Label(header, text="", font=("Segoe UI", 9), fg=MUTED, bg=BG)
     project_label.pack(anchor="w")
@@ -83,6 +84,9 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     _entry_grid_row(student_grid, "Section", values["section"], 1, 1)
     _entry_grid_row(student_grid, "Admission Number", values["admission"], 2, 0, column_span=2)
     _entry_grid_row(student_grid, "Subject", values["subject"], 3, 0, column_span=2)
+
+    tk.Label(settings, text="Answer Sheet Title", font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(8, 1))
+    _entry_row(settings, "Project title", values["title"])
 
     action_block = tk.Frame(settings, bg=PANEL)
     action_block.pack(fill="x", padx=12, pady=(8, 2))
@@ -136,6 +140,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             "class_standard": values["class_standard"].get(),
             "class_division": values["section"].get(),
             "admission_number": values["admission"].get(),
+            "title": values["title"].get(),
             "subject": values["subject"].get(),
             "margin": 100,
             "header_height": 540,
@@ -202,7 +207,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         except ValueError:
             return
 
-        project_name = values["subject"].get().strip()
+        project_name = values["title"].get().strip()
         if not project_name:
             return
 
@@ -377,6 +382,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             project_label.configure(text="No project selected")
             backend_status.configure(text="Create a project to begin generating OMR sheets.")
             values["questions"].set("")
+            values["title"].set("")
             values["subject"].set("")
             generated_pages["value"] = []
             generated_generator["value"] = None
@@ -403,7 +409,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             )
         )
         values["questions"].set(str(current_project["value"].get("question_count", "")))
-        values["subject"].set(current_project["value"].get("name", ""))
+        values["title"].set(current_project["value"].get("name", ""))
         schedule_preview()
 
     page.set_project = set_project
@@ -413,7 +419,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     for variable in values.values():
         variable.trace_add("write", schedule_preview)
     values["questions"].trace_add("write", schedule_project_sync)
-    values["subject"].trace_add("write", schedule_project_sync)
+    values["title"].trace_add("write", schedule_project_sync)
 
     if project is not None:
         page.after(100, generate_preview)

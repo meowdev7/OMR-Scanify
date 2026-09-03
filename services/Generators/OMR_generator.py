@@ -810,6 +810,10 @@ class OMRGenerator:
             config["subject"]
         ).strip()
 
+        self.title = str(
+            config.get("title", self.subject)
+        ).strip()
+
         # ----------------------------------------------------
         # Sheet ID
         # ----------------------------------------------------
@@ -1307,9 +1311,7 @@ class OMRGenerator:
             self.WIDTH // 2
         )
 
-        title = (
-            "OMR ANSWER SHEET"
-        )
+        title = self.title or "OMR ANSWER SHEET"
 
         bbox = draw.textbbox(
             (0, 0),

@@ -204,24 +204,6 @@ def create_projects_page(window, on_create_project=None, on_select_project=None)
                 select_project = lambda event=None, selected=project: on_select_project(selected) if on_select_project else None
                 project_card.bind("<Button-1>", select_project)
 
-                project_name_label = tk.Label(
-                    project_card,
-                    text=project.get("name", "Untitled Project"),
-                    font=("Segoe UI", 11, "bold"),
-                    fg="#F4F7FB",
-                    bg="#11151B",
-                )
-                project_name_label.pack(anchor="w", padx=16, pady=(14, 4))
-
-                project_meta = tk.Label(
-                    project_card,
-                    text=f"{project.get('question_count', 0)} questions • {len(project.get('results') or [])} results",
-                    font=("Segoe UI", 9),
-                    fg="#8B939E",
-                    bg="#11151B",
-                )
-                project_meta.pack(anchor="w", padx=16, pady=(0, 8))
-
                 def rename_selected(selected=project):
                     current_name = selected.get("name", "Untitled Project")
                     new_name = simpledialog.askstring(

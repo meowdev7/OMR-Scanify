@@ -40,7 +40,7 @@ def create_project_details_page(parent, project, on_back=None, on_generate_omr=N
         header.pack(fill="x", padx=18, pady=(16, 12))
         tk.Button(
             header,
-            text="<-  Back to Projects",
+            text="Back",
             command=on_back if on_back is not None else lambda: None,
             font=("Segoe UI", 9),
             fg="#4A99FF",
