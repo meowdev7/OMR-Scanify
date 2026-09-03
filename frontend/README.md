@@ -249,20 +249,32 @@ Jane Smith,48,50,96.0
 #### Submit OMR Sheet for Evaluation
 ```
 POST /api/v1/projects/{id}/submissions
-Content-Type: multipart/form-data
+Content-Type: application/json
 
-Form Parameters:
-- sheet: [image file]
-- student_id: "student-1"
+Request body:
+{
+  "sheet_id": "project-S0001",
+  "answers": ["A", null, "C", "D"]
+}
 
 Response (200):
 {
-  "submission_id": "sub-12345",
+  "sheet_id": "project-S0001",
   "student_id": "student-1",
-  "answers": [1, 2, 3, 4, 1, ...],
-  "score": 45
+  "student_name": "John Doe",
+  "correct": 3,
+  "incorrect": 0,
+  "unattempted": 1,
+  "marks": 3,
+  "total_questions": 4
 }
 ```
+
+Student roster CSV files are imported through the `Import Students` action. PNG,
+JPG, and JPEG answer sheets are uploaded through `Upload Answer Sheets`; the
+scanner reads each QR-coded sheet, submits the answers to this endpoint, and
+refreshes the project results. Multiple image files can be selected at once,
+and failed files are reported without stopping the rest of the batch.
 
 ## Directory Contents
 
@@ -271,9 +283,9 @@ Response (200):
 | `UI.py` | Application entry point. Creates the main window (1280x720), manages the sidebar, dashboard, projects page, and project action pages. Handles navigation between views and coordinates callbacks from child pages. |
 | `projects.py` | Builds the Projects page with project cards. Loads all projects via API, renders cards with project details, handles project refresh, and provides context menu actions (delete, rename). Displays empty-state UI when no projects exist. |
 | `functions.py` | Handles project creation workflow. Creates and manages the project creation dialog (modal window), validates user input, sends project data to backend, shows success/error messages, and invokes the callback on successful creation. |
-| `project_action.py` | Builds the project action/workflow page shown after successful project creation. Displays success message and provides quick-action buttons to guide users to next steps: import students, set answer key, or generate OMR sheets. |
+| `project_action.py` | Builds the project action/workflow page shown after successful project creation. Displays success message and provides quick-action buttons to import students, upload and analyze answer sheets, set an answer key, or generate OMR sheets. |
 | `omr_generator.py` | Builds the embedded OMR Generator page with live preview. Manages generator state (page size, orientation, questions, options, student details, QR settings). Handles real-time preview generation with debouncing, PDF export, and project context awareness. |
-| `sidebar.py` | Builds the left-side navigation sidebar with OMR Scanify branding and navigation buttons. Settings is packed at the bottom of the sidebar, while Dashboard, Projects, and OMR Generator remain in the main navigation area. |
+| `sidebar.py` | Builds the left-side navigation sidebar with OMR Scanify branding and navigation buttons. Settings is packed at the bottom of the sidebar; OMR generation is accessed from a selected project. |
 | `settings.py` | Builds the Settings page. Provides Dark, Light, and System appearance choices, updates the selected state, and requests an application-wide theme refresh. |
 | `theme.py` | Defines Dark and Light palettes, detects the Windows system theme, resolves the selected mode, translates legacy widget colors, and applies colors and hover behavior recursively to the interface. |
 | `storage.py` | API communication layer for all backend interactions. Encapsulates all HTTP requests to the Go backend for projects, students, answer keys, and results. Handles configuration directory resolution using `platformdirs`. |

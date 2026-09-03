@@ -5,6 +5,7 @@ import csv
 import requests
 from storage import export_results, get_project, import_students, update_answer_key
 from answer_key import answer_key_menu, open_answer_key_editor
+from answer_sheet_workflow import choose_and_process_answer_sheets
 
 from assets import asset_path
 
@@ -201,6 +202,19 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     def create_answer_key():
         open_answer_key_editor(action_window, project, lambda: (refresh_project_view(), update_answer_key_panel(), on_project_updated(project) if on_project_updated else None))
 
+    def upload_answer_sheets():
+        def completed(submitted, failures):
+            refresh_project_view()
+            update_student_and_result_panels()
+            if on_project_updated is not None:
+                on_project_updated(project)
+            message = f"{len(submitted)} answer sheet(s) analyzed successfully."
+            if failures:
+                message += f"\n\n{len(failures)} file(s) failed and were skipped."
+            messagebox.showinfo("Answer sheet analysis complete", message, parent=action_window.winfo_toplevel())
+
+        choose_and_process_answer_sheets(action_window, project, completed)
+
     def import_students_csv():
         filename = filedialog.askopenfilename(parent=action_window.winfo_toplevel(), filetypes=(("CSV files", "*.csv"),))
         if not filename:
@@ -241,6 +255,7 @@ def create_project_action_window(parent, project, on_back=None, on_create_omr=No
     _create_action_card(actions, 1, 0, "✎", "Create Answer Key", "Fill the answer key\nwith the OMR layout.", "Create Answer Key", create_answer_key)
     _create_action_card(actions, 1, 1, "⌕", "Upload Answer Key", "Upload the correct answer\nkey (CSV) for this project.", "Upload Answer Key", upload_answer_key)
     _create_action_card(actions, 2, 0, "⤓", "Export Results", "Download the project score report\nas CSV.", "Export Results", export_results_csv)
+    _create_action_card(actions, 2, 1, "⇧", "Upload Answer Sheets", "Analyze student sheets\nfrom PNG or JPEG files.", "Upload Answer Sheets", upload_answer_sheets)
 
     overview = tk.Frame(content, bg=BG)
     overview.pack(fill="both", expand=True, pady=(14, 0))

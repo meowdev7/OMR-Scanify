@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 
 from PIL import ImageTk
 from functions import create_project_window
@@ -46,8 +46,10 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         "admission": tk.StringVar(value=""),
         "title": tk.StringVar(value=project.get("name", "") if project else ""),
         "subject": tk.StringVar(value=""),
+        "student_id": tk.StringVar(value=""),
         "qr_enabled": tk.BooleanVar(value=True),
     }
+    student_choices = {}
 
     header = tk.Frame(page, bg=BG)
     header.pack(fill="x", padx=12, pady=(15, 9))
@@ -84,6 +86,10 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     _entry_grid_row(student_grid, "Section", values["section"], 1, 1)
     _entry_grid_row(student_grid, "Admission Number", values["admission"], 2, 0, column_span=2)
     _entry_grid_row(student_grid, "Subject", values["subject"], 3, 0, column_span=2)
+
+    tk.Label(settings, text="Roster Student", font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(8, 1))
+    student_selector = ttk.Combobox(settings, state="readonly", font=("Segoe UI", 9))
+    student_selector.pack(fill="x", padx=12, ipady=3)
 
     tk.Label(settings, text="Answer Sheet Title", font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(8, 1))
     _entry_row(settings, "Project title", values["title"])
@@ -142,6 +148,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             "admission_number": values["admission"].get(),
             "title": values["title"].get(),
             "subject": values["subject"].get(),
+            "student_id": values["student_id"].get(),
             "margin": 100,
             "header_height": 540,
             "start_y": 620,
@@ -384,6 +391,10 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             values["questions"].set("")
             values["title"].set("")
             values["subject"].set("")
+            values["student_id"].set("")
+            student_choices.clear()
+            student_selector["values"] = ()
+            student_selector.set("")
             generated_pages["value"] = []
             generated_generator["value"] = None
             image_label.configure(image="", text="Create a project to see the answer sheet preview.")
@@ -410,7 +421,28 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         )
         values["questions"].set(str(current_project["value"].get("question_count", "")))
         values["title"].set(current_project["value"].get("name", ""))
+        student_choices.clear()
+        student_labels = []
+        for student in current_project["value"].get("students") or []:
+            label = f"{student.get('name', 'Unnamed student')} ({student.get('roll_no', 'No roll number')})"
+            student_choices[label] = student
+            student_labels.append(label)
+        student_selector["values"] = student_labels
+        student_selector.set("")
         schedule_preview()
+
+    def select_roster_student(event=None):
+        student = student_choices.get(student_selector.get())
+        if student is None:
+            values["student_id"].set("")
+            return
+        values["student_id"].set(str(student.get("sheet_id") or student.get("id", "")).strip())
+        values["name"].set(student.get("name", ""))
+        values["class_standard"].set(student.get("class", ""))
+        values["section"].set(student.get("section", ""))
+        values["admission"].set(student.get("roll_no", ""))
+
+    student_selector.bind("<<ComboboxSelected>>", select_roster_student)
 
     page.set_project = set_project
     page.show_no_project_dialog = show_no_project_dialog

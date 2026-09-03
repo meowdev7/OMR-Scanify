@@ -810,6 +810,10 @@ class OMRGenerator:
             config["subject"]
         ).strip()
 
+        self.student_id = str(
+            config.get("student_id", "")
+        ).strip()
+
         self.title = str(
             config.get("title", self.subject)
         ).strip()
@@ -819,8 +823,8 @@ class OMRGenerator:
         # ----------------------------------------------------
 
         self.sheet_id = (
-            self.subject.upper()[:3]
-            + self.admission_number
+            self.student_id
+            or self.subject.upper()[:3] + self.admission_number
         )
 
         # ----------------------------------------------------
@@ -1040,6 +1044,8 @@ class OMRGenerator:
     ):
 
         return {
+
+            "id": self.student_id,
 
             "admission": (
                 self.admission_number

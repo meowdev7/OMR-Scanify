@@ -8,6 +8,7 @@ from assets import asset_path
 from project_action import parse_answer_key_csv
 from storage import export_results, get_project, import_students, load_results, update_answer_key
 from answer_key import answer_key_menu, open_answer_key_editor
+from answer_sheet_workflow import choose_and_process_answer_sheets
 
 BG = "#080D17"
 PANEL = "#101722"
@@ -75,6 +76,16 @@ def create_project_details_page(parent, project, on_back=None, on_generate_omr=N
         def create_answer_key():
             open_answer_key_editor(page, page.project, refresh_project_data)
 
+        def upload_answer_sheets():
+            def completed(submitted, failures):
+                refresh_project_data()
+                message = f"{len(submitted)} answer sheet(s) analyzed successfully."
+                if failures:
+                    message += f"\n\n{len(failures)} file(s) failed and were skipped."
+                messagebox.showinfo("Answer sheet analysis complete", message)
+
+            choose_and_process_answer_sheets(page, page.project, completed)
+
         def show_answer_key_menu(button):
             menu = answer_key_menu(button, page.project, refresh_project_data)
             menu.post(button.winfo_rootx(), button.winfo_rooty() + button.winfo_height())
@@ -122,6 +133,7 @@ def create_project_details_page(parent, project, on_back=None, on_generate_omr=N
 
         tk.Button(actions, text="Generate OMR", command=lambda: on_generate_omr(page.project) if on_generate_omr else None, **button_kwargs).pack(side="left", padx=(0, 8))
         tk.Button(actions, text="Import Students", command=import_students_csv, **button_kwargs).pack(side="left", padx=(0, 8))
+        tk.Button(actions, text="Upload Answer Sheets", command=upload_answer_sheets, **button_kwargs).pack(side="left", padx=(0, 8))
         tk.Button(actions, text="Create Answer Key", command=create_answer_key, **button_kwargs).pack(side="left", padx=(0, 8))
         tk.Button(actions, text="Upload Answer Key", command=upload_answer_key, **button_kwargs).pack(side="left", padx=(0, 8))
         if page.project.get("answer_key"):

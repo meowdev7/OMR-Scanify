@@ -124,3 +124,13 @@ def delete_answer_key(project_id):
     )
     response.raise_for_status()
     return response.json()
+
+
+def submit_submission(project_id, sheet_id, answers):
+    response = requests.post(
+        f"{API_URL}/projects/{project_id}/submissions",
+        json={"sheet_id": sheet_id, "answers": answers},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
