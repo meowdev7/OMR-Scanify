@@ -98,9 +98,13 @@ def open_answer_key_editor(parent, project, on_saved=None):
 
     footer = tk.Frame(dialog, bg=BG)
     footer.pack(fill="x", padx=24, pady=(0, 20))
-    tk.Button(footer, text="Cancel", command=dialog.destroy, font=("Segoe UI", 9), fg=MUTED, bg=BG, activebackground=BG, activeforeground=TEXT, relief="flat", bd=0, padx=12, pady=7).pack(side="right", padx=(8, 0))
-    tk.Button(footer, text="Save Answer Key", command=save, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, padx=14, pady=7).pack(side="right")
-    tk.Button(footer, text="Reset", command=reset_answers, font=("Segoe UI", 9), fg="#FFB4B4", bg=BG, activebackground=BG, activeforeground="#FFD1D1", relief="flat", bd=0, padx=12, pady=7).pack(side="left")
+    footer.grid_columnconfigure(0, weight=1)
+    footer.grid_columnconfigure(1, weight=0)
+    tk.Button(footer, text="Reset", command=reset_answers, font=("Segoe UI", 9), fg="#FFB4B4", bg=BG, activebackground=BG, activeforeground="#FFD1D1", relief="flat", bd=0, padx=12, pady=7).grid(row=0, column=0, sticky="w")
+    action_buttons = tk.Frame(footer, bg=BG)
+    action_buttons.grid(row=0, column=1, sticky="e")
+    tk.Button(action_buttons, text="Save Answer Key", command=save, font=("Segoe UI", 9, "bold"), fg="white", bg=BLUE, activebackground="#2B7CF0", relief="flat", bd=0, padx=14, pady=7).pack(side="left")
+    tk.Button(action_buttons, text="Cancel", command=dialog.destroy, font=("Segoe UI", 9), fg=MUTED, bg=BG, activebackground=BG, activeforeground=TEXT, relief="flat", bd=0, padx=12, pady=7).pack(side="left", padx=(8, 0))
 
 
 def answer_key_menu(parent, project, on_changed=None):
