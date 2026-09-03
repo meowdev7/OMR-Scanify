@@ -29,14 +29,14 @@ def scan_answer_sheet_files(files, question_count, templates_directory=None, deb
             sheet_id = str(pages[0].get("sheet_id", "")).strip()
             if not sheet_id:
                 raise ValueError("No student ID was found in the sheet QR code.")
-            student = normalize_student(pages[0].get("student"))
+            student = normalize_student(pages[0].get("student"), sheet_id)
 
             answers_by_question = {}
             scan_details = []
             for page in pages:
                 if str(page.get("sheet_id", "")).strip() != sheet_id:
                     raise ValueError("The uploaded pages contain different student IDs.")
-                if normalize_student(page.get("student")) != student:
+                if normalize_student(page.get("student"), sheet_id) != student:
                     raise ValueError("The uploaded pages contain different student details.")
                 for question in page.get("questions") or []:
                     question_number = int(question["question"])
@@ -70,15 +70,15 @@ def normalize_answer(value):
     return answer
 
 
-def normalize_student(value):
+def normalize_student(value, sheet_id=""):
     student = value if isinstance(value, dict) else {}
     details = {
-        "id": str(student.get("id", "")).strip(),
+        "id": str(student.get("id", "")).strip() or sheet_id,
         "name": str(student.get("name", "")).strip(),
         "class": str(student.get("class", "")).strip(),
         "section": str(student.get("section", "")).strip(),
         "roll_no": str(student.get("roll_no", student.get("admission", ""))).strip(),
     }
     if not details["id"] or not details["name"]:
-        raise ValueError("The sheet QR code does not contain a student ID and name.")
+        raise ValueError("The sheet QR code does not contain a student name.")
     return details
