@@ -141,6 +141,22 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     page_indicator.pack(side="left", expand=True)
     next_page_button = tk.Button(preview_controls, text=">", width=3, state="disabled", command=lambda: change_preview_page(1), font=("Segoe UI", 9, "bold"), fg=TEXT, bg=INPUT, activebackground="#202D3E", relief="flat", bd=0)
     next_page_button.pack(side="right")
+    export_button = tk.Button(
+        preview_controls,
+        text="Export OMR",
+        state="disabled",
+        command=lambda: show_format_dialog(),
+        font=("Segoe UI", 9, "bold"),
+        fg=TEXT,
+        bg=BLUE,
+        activebackground="#2B7CF0",
+        relief="flat",
+        bd=0,
+        padx=10,
+        pady=3,
+        cursor="hand2",
+    )
+    export_button.pack(side="right", padx=(0, 8))
 
     def update_preview_navigation():
         pages = generated_pages["value"]
@@ -199,6 +215,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     def generate_preview():
         preview_job["value"] = None
         generated_generator["value"] = None
+        export_button.configure(state="disabled")
         if current_project["value"] is None:
             generated_pages["value"] = []
             preview_page_index["value"] = 0
@@ -218,6 +235,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             generated_pages["value"] = generator.generate()
             preview_page_index["value"] = 0
             generated_generator["value"] = generator
+            export_button.configure(state="normal")
             update_preview_navigation()
             page_image = generated_pages["value"][0].copy()
             page_image.thumbnail((max(1, image_label.winfo_width() - 20), max(1, image_label.winfo_height() - 20)))
@@ -231,6 +249,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             return
         except Exception as error:
             generated_pages["value"] = []
+            export_button.configure(state="disabled")
             messagebox.showerror("Preview failed", f"Could not generate the OMR preview:\n\n{error}", parent=page.winfo_toplevel())
 
     def sync_project_values():
@@ -431,6 +450,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             preview_page_index["value"] = 0
             update_preview_navigation()
             generated_generator["value"] = None
+            export_button.configure(state="disabled")
             image_label.configure(image="", text="Create a project to see the answer sheet preview.")
             image_label.image = None
             return

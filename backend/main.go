@@ -6,6 +6,8 @@ import (
 	"backend/storage"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 /*
@@ -36,9 +38,19 @@ func main() {
 	mux.HandleFunc("GET /api/v1/projects/{id}/results", api.ListResultsHandler)
 	mux.HandleFunc("GET /api/v1/projects/{id}/results/export", api.ExportResultsCSVHandler)
 
-	fmt.Println("Server listening on :8080")
+	host := os.Getenv("OMR_SCANIFY_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("OMR_SCANIFY_PORT")
+	if parsedPort, err := strconv.Atoi(port); err != nil || parsedPort < 1 || parsedPort > 65535 {
+		port = "8080"
+	}
+	address := host + ":" + port
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	fmt.Printf("Server listening on %s\n", address)
+
+	if err := http.ListenAndServe(address, mux); err != nil {
 		panic(err)
 	}
 }

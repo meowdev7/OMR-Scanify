@@ -727,16 +727,15 @@ preview_job = {"value": None}  # Stores scheduled preview update
 
 ### Backend Connection
 
-The backend URL is configured in `storage.py`:
+The frontend reads the backend connection from environment variables. The defaults
+are `http://127.0.0.1:8080/api/v1`.
 
-```python
-API_URL = "http://127.0.0.1:8080/api/v1"
+```text
+OMR_SCANIFY_API_URL=http://127.0.0.1:8080/api/v1
 ```
 
-To connect to a different backend:
-1. Edit `storage.py` and update `API_URL`
-2. Ensure the backend is running and listening on the configured host/port
-3. Restart the frontend
+For a local backend, `OMR_SCANIFY_HOST` and `OMR_SCANIFY_PORT` can be used instead
+of the complete URL. The Go backend uses the same host and port variables.
 
 ### Project Storage Directory
 

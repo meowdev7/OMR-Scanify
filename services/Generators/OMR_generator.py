@@ -643,6 +643,7 @@ import zlib
 import qrcode
 
 from PIL import Image, ImageDraw, ImageFont
+from services.font_utils import load_font
 
 from services.omr_identity import identity_coordinates, identity_schema
 
@@ -898,31 +899,7 @@ class OMRGenerator:
         size
     ):
 
-        paths = [
-
-            Path("C:/Windows/Fonts/segoeui.ttf"),
-
-            Path("C:/Windows/Fonts/arial.ttf"),
-
-            "/usr/share/fonts/truetype/dejavu/"
-            "DejaVuSans.ttf",
-
-            "/usr/share/fonts/truetype/"
-            "liberation2/"
-            "LiberationSans-Regular.ttf",
-        ]
-
-        for path in paths:
-
-            try:
-
-                return ImageFont.truetype(path, size)
-
-            except Exception:
-
-                continue
-
-        return ImageFont.load_default()
+        return load_font(size)
 
     # ========================================================
     # TEMPLATE ID

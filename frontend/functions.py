@@ -2,6 +2,8 @@ from tkinter import Toplevel, Label, Entry, Button, messagebox
 
 import requests
 
+from storage import API_URL
+
 
 def create_project(project_window, project_name, question_count, on_created=None):
     try:
@@ -12,7 +14,7 @@ def create_project(project_window, project_name, question_count, on_created=None
         if not data["name"] or data["question_count"] <= 0:
             raise ValueError("Enter a project name and a positive question count.")
         response = requests.post(
-            "http://127.0.0.1:8080/api/v1/projects",
+            f"{API_URL}/projects",
             json=data,
             timeout=5,
         )
