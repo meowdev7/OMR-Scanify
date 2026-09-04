@@ -207,11 +207,14 @@ Response (200):
 {
   "results": [
     {
+      "sheet_id": "project-S0001",
       "student_id": "student-1",
       "student_name": "John Doe",
-      "score": 45,
-      "total": 50,
-      "percentage": 90.0
+      "correct": 45,
+      "incorrect": 3,
+      "unattempted": 2,
+      "marks": 45,
+      "total_questions": 50
     },
     ...
   ]
@@ -224,13 +227,24 @@ GET /api/v1/projects/{id}/results/{student_id}
 
 Response (200):
 {
+  "sheet_id": "project-S0001",
   "student_id": "student-1",
   "student_name": "John Doe",
-  "answers": [1, 2, 3, 4, 1, ...],
-  "correct_answers": [1, 2, 3, 4, 1, ...],
-  "score": 45,
-  "total": 50,
-  "percentage": 90.0
+  "correct": 45,
+  "incorrect": 3,
+  "unattempted": 2,
+  "marks": 45,
+  "total_questions": 50,
+  "questions": [
+    {
+      "question": 1,
+      "correct_answer": "A",
+      "scanned_answer": "A",
+      "status": "Correct",
+      "confidence": 0.76,
+      "page": 1
+    }
+  ]
 }
 ```
 
@@ -239,9 +253,9 @@ Response (200):
 GET /api/v1/projects/{id}/results/export
 
 Response (200): CSV file download
-student_name,score,total,percentage
-John Doe,45,50,90.0
-Jane Smith,48,50,96.0
+sheet_id,student_id,student_name,correct,incorrect,unattempted,marks,total_questions
+project-S0001,student-1,John Doe,45,3,2,45,50
+project-S0002,student-2,Jane Smith,48,1,1,48,50
 ```
 
 ### Submission Endpoints
@@ -277,6 +291,26 @@ student is added to the project automatically; a roster CSV is not required.
 Multiple image files can be selected at once. After processing, the Analysis
 window shows the batch summary, failed files, and question-level results. Saved
 results can be reopened later from the project analysis action.
+
+### Analysis Summary
+
+The Analysis window displays large summary cards for `Analyzed`, `Failed`,
+`Questions`, `Score`, `Correct`, `Incorrect`, and `Unattempted`.
+
+`Score` is displayed as `marks/total_questions`, for example `12/20`. Marks
+equal the number of correct answers. Incorrect and unattempted answers do not
+add marks. A blank or ambiguous scanner result is represented by `null` and is
+evaluated as `Unattempted`.
+
+The question table shows the answer key, scanned answer, status, confidence,
+and page. Confidence is a scanner diagnostic based on the difference between
+the best and second-best bubble scores; it is not a percentage mark.
+
+If filled bubbles appear as unattempted, the scanner rejected the marks before
+evaluation. Confirm that the sheet was generated from the current project,
+check any failed-file message, and upload the image again after correcting the
+scanner or template configuration. Existing results are not rescanned
+automatically.
 
 ## Directory Contents
 
@@ -433,12 +467,6 @@ generator_page.set_project(project)
 ## Creating a Project
 
 The create flow is:
-
-### Current Preview Mode
-
-Backend creation is currently temporarily disconnected in `UI.py` so the frontend screens can be edited without a running backend. Clicking the dashboard create-project card opens the project action page with the local preview project `Physics Test` and 50 questions. The sidebar generator also uses the current active preview project.
-
-To restore the backend creation flow, `start_scan()` should call `create_project_window()` and pass a callback that receives the created project, refreshes the Projects page, and calls `show_generator(project)` or opens the project action page.
 
 ### Backend Creation Flow
 
@@ -598,7 +626,7 @@ Run the frontend with:
 python frontend/UI.py
 ```
 
-The current preview mode can open the UI without the backend. Start the backend at `http://127.0.0.1:8080` when reconnecting project creation or other backend operations.
+Start the backend at `http://127.0.0.1:8080` before creating projects, uploading answer keys, uploading sheets, or viewing saved results.
 
 ## Architecture & Design
 

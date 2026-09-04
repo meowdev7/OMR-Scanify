@@ -15,9 +15,22 @@ OMR-Scanify is a school project developed by a group of XII graders to automate 
 
  
 Architecture
-1.  **Python / OpenCV:** Processes the OMR image, detects bubbles, extracts answers, and transmits a JSON payload to the backend.
+1.  **Python / OpenCV:** Processes the OMR image, detects bubbles, extracts answers, and sends a normalized submission to the backend. Empty or ambiguous bubbles are sent as unattempted answers.
 2.  **Go Backend:** Manages project state, runs evaluation logic against an answer key, manages student records in-memory, and handles CSV exports.
-3.  **Tkinter Frontend:** Provides a desktop dashboard for teachers to create tests, import students, trigger scans, and view scores.
+3.  **Tkinter Frontend:** Provides a desktop dashboard for teachers to create tests, manage answer keys, upload sheets, and view analysis results.
+
+### Scan and Evaluation Workflow
+
+1. Create a project and set its question count.
+2. Create or upload an answer key. The key must contain exactly one `A`, `B`, `C`, or `D` answer for each question.
+3. Generate the QR-coded OMR sheet from the project generator and print it at its original scale.
+4. Fill bubbles clearly and upload PNG, JPG, or JPEG sheets from the project action/details page.
+5. The scanner reads the QR metadata and bubble marks. The backend compares each scanned answer with the key and stores the result.
+6. Open Analysis to review the large `Score`, `Correct`, `Incorrect`, and `Unattempted` summary cards and the question-level table.
+
+`Score` is the number of correct answers, shown as `correct/total_questions`. Incorrect and unattempted answers do not add marks. A blank or ambiguous scan is represented as `null` and evaluated as `Unattempted`.
+
+If a sheet was uploaded before a scanner correction or after changing the answer key, upload it again. Results already stored by the backend are not rescanned automatically.
 
 ---
 
@@ -89,3 +102,11 @@ To verify logic stability and route evaluation engines, run:
 ```bash
 go test -v ./...
 ```
+
+### Scanner Development Check
+
+The scanner is implemented in `services/Scanner/OMR_scanner.py`. Bubble scores
+are measured inside each bubble and compared with local thresholds so printed
+outlines are not mistaken for filled answers. When changing scanner behavior,
+validate both an empty sheet and a sheet with known filled bubbles before using
+the frontend workflow.
