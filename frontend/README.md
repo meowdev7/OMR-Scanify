@@ -38,6 +38,7 @@ The frontend is a cross-platform desktop application built with Tkinter that ena
   - Configurable orientation (Portrait, Landscape)
   - Customizable number of questions and options per question
   - Student detail fields (name, class, section, admission number, subject)
+  - CBSE-style identity bubbles for candidate name, subject, roll number, class, section, and set code
   - QR code embedding for sheet tracking
 - **Real-time Preview System**: Debounced preview updates when generator settings or student details change, reducing server load.
 - **PDF Export**: Generate and download OMR sheets as PDF from the frontend.
@@ -291,6 +292,15 @@ student is added to the project automatically; a roster CSV is not required.
 Multiple image files can be selected at once. After processing, the Analysis
 window shows the batch summary, failed files, and question-level results. Saved
 results can be reopened later from the project analysis action.
+
+Generated A4 portrait packets use a separate identity page followed by answer
+pages. Candidate name and subject use character grids, roll/admission number
+uses eight digit columns, and class, section, and set code use selectable
+bubbles. QR identity remains the primary lookup source. Select all pages of a
+packet when uploading; the frontend groups them by QR sheet ID before sending
+one submission. The scanner also returns `student_details`,
+`identity_status` (`verified`, `mismatch`, or `not_checked`), and any
+`identity_mismatches` in the submission/result payload.
 
 ### Analysis Summary
 

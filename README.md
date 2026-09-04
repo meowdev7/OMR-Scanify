@@ -23,10 +23,17 @@ Architecture
 
 1. Create a project and set its question count.
 2. Create or upload an answer key. The key must contain exactly one `A`, `B`, `C`, or `D` answer for each question.
-3. Generate the QR-coded OMR sheet from the project generator and print it at its original scale.
-4. Fill bubbles clearly and upload PNG, JPG, or JPEG sheets from the project action/details page.
-5. The scanner reads the QR metadata and bubble marks. The backend compares each scanned answer with the key and stores the result.
-6. Open Analysis to review the large `Score`, `Correct`, `Incorrect`, and `Unattempted` summary cards and the question-level table.
+3. Generate the QR-coded OMR packet from the project generator and print every page at its original scale. The packet contains one student-details page followed by one or more answer pages.
+4. Fill the student-detail bubbles and answer bubbles clearly, then upload all packet pages together from the project action/details page.
+5. The scanner groups pages by QR sheet ID, reads the identity page, reads answers from answer pages, and sends one combined submission to the backend.
+6. The backend compares each answer with the key and stores the result. Open Analysis to review the large `Score`, `Correct`, `Incorrect`, and `Unattempted` summary cards and the question-level table.
+
+Generated A4 portrait packets now use a separate CBSE-style identity page with
+character bubbles for candidate name and subject, eight roll-number digit
+columns, and choice bubbles for class, section, and set code. The QR remains
+the primary identity reference; the scanner compares bubbled name, class,
+section, and roll number with the QR details and records `verified` or
+`mismatch` status. Answer pages contain only the question bubbles.
 
 `Score` is the number of correct answers, shown as `correct/total_questions`. Incorrect and unattempted answers do not add marks. A blank or ambiguous scan is represented as `null` and evaluated as `Unattempted`.
 

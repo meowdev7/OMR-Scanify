@@ -164,15 +164,18 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := models.Result{
-		SheetID:        submission.SheetID,
-		StudentID:      student.ID,
-		StudentName:    student.Name,
-		Correct:        correct,
-		Incorrect:      incorrect,
-		Unattempted:    unattempted,
-		Marks:          marks,
-		TotalQuestions: p.QuestionCount,
-		Questions:      buildQuestionResults(submission, checkedAnswers, p.AnswerKey),
+		SheetID:            submission.SheetID,
+		StudentID:          student.ID,
+		StudentName:        student.Name,
+		Correct:            correct,
+		Incorrect:          incorrect,
+		Unattempted:        unattempted,
+		Marks:              marks,
+		TotalQuestions:     p.QuestionCount,
+		StudentDetails:     submission.StudentDetails,
+		IdentityStatus:     submission.IdentityStatus,
+		IdentityMismatches: submission.IdentityMismatches,
+		Questions:          buildQuestionResults(submission, checkedAnswers, p.AnswerKey),
 	}
 
 	project.AddResultToProject(p, result)

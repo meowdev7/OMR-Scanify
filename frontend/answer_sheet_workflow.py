@@ -40,6 +40,9 @@ def choose_and_process_answer_sheets(parent, project, on_complete=None):
                             submission["answers"],
                             submission.get("student"),
                             submission.get("scan"),
+                            submission.get("student_details"),
+                            submission.get("identity_status"),
+                            submission.get("identity_mismatches"),
                         )
                     )
                 except (KeyError, requests.RequestException) as error:

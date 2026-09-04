@@ -7,6 +7,7 @@ import zlib
 from pathlib import Path
 
 import cv2
+from services.omr_identity import identity_coordinates
 import numpy as np
 
 from PIL import Image
@@ -310,6 +311,8 @@ class OMRTemplate:
                 "registration_marker_margin"
             ]
         )
+
+        self.identity = self.data.get("identity")
 
         self.template_id = (
             self.data.get(
@@ -677,6 +680,9 @@ class OMRTemplate:
             "choices"
         ] = choices
 
+        if isinstance(metadata.get("identity"), dict):
+            result["identity"] = dict(metadata["identity"])
+
         # ====================================================
         # STUDENT/METADATA ALIASES
         # ====================================================
@@ -829,6 +835,8 @@ class OMRTemplate:
             "choices": "".join(
                 self.choices
             ),
+
+            "identity": self.identity,
         }
 
         raw = json.dumps(
@@ -2582,6 +2590,46 @@ class OMRScanner:
             BubbleReader()
         )
 
+    def read_identity(self, gray, template):
+        if not template.identity:
+            return None
+
+        schema = template.identity
+        coordinates = identity_coordinates(schema)
+        radius = int(schema.get("bubble_radius", 11))
+
+        def read_value(bubbles, values):
+            scores = [self.reader.score(gray, x, y, radius) for x, y in bubbles]
+            if not scores:
+                return None
+            ranked = np.argsort(scores)[::-1]
+            best = float(scores[int(ranked[0])])
+            second = float(scores[int(ranked[1])]) if len(scores) > 1 else 0.0
+            marked = sum(score >= self.reader.mark_threshold for score in scores)
+            if best < self.reader.blank_threshold:
+                return None
+            if marked > 1 or best - second < self.reader.ambiguity_margin:
+                return "?"
+            return values[int(ranked[0])]
+
+        def read_grid(grid, alphabet):
+            characters = [read_value(column, alphabet) for column in grid]
+            return "".join(character for character in characters if character not in (None, "?")).strip() or None
+
+        roll = []
+        for column in coordinates["roll"]:
+            value = read_value(column, [str(digit) for digit in range(10)])
+            roll.append(value if value is not None else "?")
+
+        return {
+            "name": read_grid(coordinates["name"], schema["name_alphabet"]),
+            "subject": read_grid(coordinates["subject"], schema["subject_alphabet"]),
+            "roll_no": "".join(roll) if any(value != "?" for value in roll) else None,
+            "class": read_value(coordinates["class"], schema["class_values"]),
+            "section": read_value(coordinates["section"], schema["section_values"]),
+            "set": read_value(coordinates["set"], schema["set_values"]),
+        }
+
     # ========================================================
     # LOAD IMAGE
     # ========================================================
@@ -2955,6 +3003,8 @@ class OMRScanner:
 
                 "questions_on_page": 0,
 
+                "page_type": "answers",
+
                 "student": {},
             }
 
@@ -3004,6 +3054,8 @@ class OMRScanner:
                     0
                 )
             ),
+
+            "page_type": str(sheet.get("type", "answers")),
 
             "student": student,
         }
@@ -3134,7 +3186,7 @@ class OMRScanner:
             ]
         )
 
-        if question_count <= 0:
+        if page_info["page_type"] != "identity" and question_count <= 0:
 
             if template.question_count:
                 question_count = template.question_count
@@ -3251,6 +3303,8 @@ class OMRScanner:
             ),
             0
         )
+
+        student_details = self.read_identity(gray, template)
 
         # ====================================================
         # READ ANSWERS
@@ -3534,6 +3588,8 @@ class OMRScanner:
                 question_count
             ),
 
+            "page_type": page_info["page_type"],
+
             "template_id": (
                 template.template_id
             ),
@@ -3586,6 +3642,8 @@ class OMRScanner:
                     "student"
                 ]
             ),
+
+            "student_details": student_details,
 
             "questions": results,
 

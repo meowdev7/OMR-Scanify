@@ -30,6 +30,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     preview_image = {"value": None}
     generated_pages = {"value": []}
     generated_generator = {"value": None}
+    preview_page_index = {"value": 0}
     preview_job = {"value": None}
     project_sync_job = {"value": None}
     current_project = {"value": project}
@@ -46,6 +47,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         "admission": tk.StringVar(value=""),
         "title": tk.StringVar(value=project.get("name", "") if project else ""),
         "subject": tk.StringVar(value=""),
+        "set_code": tk.StringVar(value="A"),
         "student_id": tk.StringVar(value=""),
         "qr_enabled": tk.BooleanVar(value=True),
     }
@@ -86,6 +88,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     _entry_grid_row(student_grid, "Section", values["section"], 1, 1)
     _entry_grid_row(student_grid, "Admission Number", values["admission"], 2, 0, column_span=2)
     _entry_grid_row(student_grid, "Subject", values["subject"], 3, 0, column_span=2)
+    _entry_grid_row(student_grid, "Set Code", values["set_code"], 4, 0, column_span=2)
 
     tk.Label(settings, text="Roster Student", font=("Segoe UI", 8), fg=MUTED, bg=PANEL).pack(anchor="w", padx=12, pady=(8, 1))
     student_selector = ttk.Combobox(settings, state="readonly", font=("Segoe UI", 9))
@@ -130,6 +133,29 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
     image_container.pack(fill="both", expand=True, padx=12, pady=(0, 12))
     image_label = tk.Label(image_container, text="Generate a preview to see the answer sheet.", font=("Segoe UI", 10), fg=MUTED, bg=PANEL)
     image_label.pack(fill="both", expand=True)
+    preview_controls = tk.Frame(preview, bg=PANEL)
+    preview_controls.pack(fill="x", padx=12, pady=(0, 10))
+    previous_page_button = tk.Button(preview_controls, text="<", width=3, state="disabled", command=lambda: change_preview_page(-1), font=("Segoe UI", 9, "bold"), fg=TEXT, bg=INPUT, activebackground="#202D3E", relief="flat", bd=0)
+    previous_page_button.pack(side="left")
+    page_indicator = tk.Label(preview_controls, text="Page 0 of 0", font=("Segoe UI", 9), fg=MUTED, bg=PANEL)
+    page_indicator.pack(side="left", expand=True)
+    next_page_button = tk.Button(preview_controls, text=">", width=3, state="disabled", command=lambda: change_preview_page(1), font=("Segoe UI", 9, "bold"), fg=TEXT, bg=INPUT, activebackground="#202D3E", relief="flat", bd=0)
+    next_page_button.pack(side="right")
+
+    def update_preview_navigation():
+        pages = generated_pages["value"]
+        page_count = len(pages)
+        current_page = preview_page_index["value"] + 1 if page_count else 0
+        page_indicator.configure(text=f"Page {current_page} of {page_count}")
+        previous_page_button.configure(state="normal" if current_page > 1 else "disabled")
+        next_page_button.configure(state="normal" if current_page < page_count else "disabled")
+
+    def change_preview_page(offset):
+        pages = generated_pages["value"]
+        if not pages:
+            return
+        preview_page_index["value"] = max(0, min(preview_page_index["value"] + offset, len(pages) - 1))
+        refresh_preview()
 
     def make_config():
         try:
@@ -148,6 +174,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             "admission_number": values["admission"].get(),
             "title": values["title"].get(),
             "subject": values["subject"].get(),
+            "set_code": values["set_code"].get().strip().upper(),
             "student_id": values["student_id"].get(),
             "margin": 100,
             "header_height": 540,
@@ -159,6 +186,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             "bubble_radius": 24,
             "question_bubble_gap": 35,
             "qr_enabled": values["qr_enabled"].get(),
+            "cbse_identity": True,
             "qr_position": "Top Right",
             "output_format": "PDF",
             "header_name": True,
@@ -173,6 +201,8 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         generated_generator["value"] = None
         if current_project["value"] is None:
             generated_pages["value"] = []
+            preview_page_index["value"] = 0
+            update_preview_navigation()
             image_label.configure(image="", text="Create a project to see the answer sheet preview.")
             image_label.image = None
             return
@@ -186,7 +216,9 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         try:
             generator = OMRGenerator(make_config())
             generated_pages["value"] = generator.generate()
+            preview_page_index["value"] = 0
             generated_generator["value"] = generator
+            update_preview_navigation()
             page_image = generated_pages["value"][0].copy()
             page_image.thumbnail((max(1, image_label.winfo_width() - 20), max(1, image_label.winfo_height() - 20)))
             preview_image["value"] = ImageTk.PhotoImage(page_image)
@@ -308,7 +340,7 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
         pages = generated_pages["value"]
         if not pages or image_label.winfo_width() <= 1:
             return
-        page_image = pages[0].copy()
+        page_image = pages[preview_page_index["value"]].copy()
         page_image.thumbnail((max(1, image_label.winfo_width() - 20), max(1, image_label.winfo_height() - 20)))
         preview_image["value"] = ImageTk.PhotoImage(page_image)
         image_label.configure(image=preview_image["value"])
@@ -396,6 +428,8 @@ def create_omr_generator_page(parent, project=None, on_back=None, on_project_cre
             student_selector["values"] = ()
             student_selector.set("")
             generated_pages["value"] = []
+            preview_page_index["value"] = 0
+            update_preview_navigation()
             generated_generator["value"] = None
             image_label.configure(image="", text="Create a project to see the answer sheet preview.")
             image_label.image = None

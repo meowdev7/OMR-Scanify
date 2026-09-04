@@ -644,6 +644,8 @@ import qrcode
 
 from PIL import Image, ImageDraw, ImageFont
 
+from services.omr_identity import identity_coordinates, identity_schema
+
 
 # ============================================================
 # OMR GENERATOR ENGINE
@@ -782,6 +784,10 @@ class OMRGenerator:
             config["choices"]
         )
 
+        self.cbse_identity = bool(
+            config.get("cbse_identity", True)
+        )
+
         self.questions = config[
             "questions"
         ]
@@ -809,6 +815,10 @@ class OMRGenerator:
         self.subject = str(
             config["subject"]
         ).strip()
+
+        self.set_code = str(
+            config.get("set_code", "")
+        ).strip().upper()
 
         self.student_id = str(
             config.get("student_id", "")
@@ -966,6 +976,8 @@ class OMRGenerator:
             "choices": "".join(
                 self.choices
             ),
+
+            "identity": identity_schema() if self.cbse_identity else None,
         }
 
         raw = json.dumps(
@@ -993,7 +1005,7 @@ class OMRGenerator:
         self
     ):
 
-        return {
+        details = {
 
             "id": self.template_id,
 
@@ -1035,6 +1047,11 @@ class OMRGenerator:
             ],
         }
 
+        if self.cbse_identity:
+            details["identity"] = identity_schema()
+
+        return details
+
     # ========================================================
     # STUDENT DETAILS
     # ========================================================
@@ -1062,6 +1079,8 @@ class OMRGenerator:
             ),
 
             "subject": self.subject,
+
+            "set": self.set_code,
         }
 
     # ========================================================
@@ -1073,7 +1092,8 @@ class OMRGenerator:
         page_number,
         total_pages,
         first_question,
-        questions_on_page
+        questions_on_page,
+        page_type="answers"
     ):
 
         return {
@@ -1087,6 +1107,8 @@ class OMRGenerator:
             "first": first_question,
 
             "count": questions_on_page,
+
+            "type": page_type,
         }
 
     # ========================================================
@@ -1098,7 +1120,8 @@ class OMRGenerator:
         page_number,
         total_pages,
         first_question,
-        questions_on_page
+        questions_on_page,
+        page_type="answers"
     ):
 
         payload = {
@@ -1109,7 +1132,8 @@ class OMRGenerator:
                 page_number,
                 total_pages,
                 first_question,
-                questions_on_page
+                questions_on_page,
+                page_type
             ),
 
             "template": (
@@ -1310,7 +1334,8 @@ class OMRGenerator:
         self,
         draw,
         page_number,
-        total_pages
+        total_pages,
+        identity_page=False
     ):
 
         center_x = (
@@ -1414,6 +1439,9 @@ class OMRGenerator:
             font=self.font_small
         )
 
+        if self.cbse_identity and identity_page:
+            self.draw_identity_bubbles(draw)
+
         # ----------------------------------------------------
         # Page number
         # ----------------------------------------------------
@@ -1457,17 +1485,68 @@ class OMRGenerator:
             (
                 150,
 
-                self.HEADER_HEIGHT + 20,
+                2660 if identity_page else self.HEADER_HEIGHT + 20,
 
                 self.WIDTH - 150,
 
-                self.HEADER_HEIGHT + 20
+                2660 if identity_page else self.HEADER_HEIGHT + 20
             ),
 
             fill="black",
 
             width=5
         )
+
+    def draw_identity_bubbles(self, draw):
+        schema = identity_schema()
+        coordinates = identity_coordinates(schema)
+        radius = schema["bubble_radius"]
+        x_spacing = schema["bubble_x_spacing"]
+        y_spacing = schema["bubble_y_spacing"]
+        tiny_font = self.load_font(30)
+        label_font = self.load_font(48)
+        field_font = self.load_font(42)
+
+        draw.text((150, 555), "CANDIDATE NAME", fill="black", font=label_font)
+        for column, bubbles in enumerate(coordinates["name"], start=1):
+            draw.text((bubbles[0][0] - 8, 600), str(column), fill="black", font=tiny_font)
+            for row, (x, y) in enumerate(bubbles):
+                self.draw_bubble(draw, x, y, radius)
+                if column == 1:
+                    draw.text((x - 58, y - 12), schema["name_alphabet"][row] or "_", fill="black", font=tiny_font)
+
+        draw.text((1300, 555), "SUBJECT", fill="black", font=label_font)
+        for column, bubbles in enumerate(coordinates["subject"], start=1):
+            draw.text((bubbles[0][0] - 8, 600), str(column), fill="black", font=tiny_font)
+            for row, (x, y) in enumerate(bubbles):
+                self.draw_bubble(draw, x, y, radius)
+                if column == 1:
+                    draw.text((x - 58, y - 12), schema["subject_alphabet"][row] or "_", fill="black", font=tiny_font)
+
+        self.draw_roll_grid(draw, coordinates["roll"], field_font, radius)
+        self.draw_identity_choice_row(draw, "CLASS", coordinates["class"], schema["class_values"], field_font, radius)
+        self.draw_identity_choice_row(draw, "SECTION", coordinates["section"], schema["section_values"], field_font, radius)
+        self.draw_identity_choice_row(draw, "SET", coordinates["set"], schema["set_values"], field_font, radius)
+
+    def draw_identity_choice_row(self, draw, label, coordinates, values, font, radius):
+        if not coordinates:
+            return
+        x = coordinates[0][0]
+        draw.text((x - 20, coordinates[0][1] - 78), label, fill="black", font=font)
+        for value, (bubble_x, bubble_y) in zip(values, coordinates):
+            self.draw_bubble(draw, bubble_x, bubble_y, radius)
+            draw.text((bubble_x - 58, bubble_y - 14), value, fill="black", font=self.load_font(30))
+
+    def draw_roll_grid(self, draw, coordinates, font, radius):
+        if not coordinates:
+            return
+        draw.text((coordinates[0][0][0] - 20, coordinates[0][0][1] - 78), "ROLL NO", fill="black", font=font)
+        for column, bubbles in enumerate(coordinates, start=1):
+            draw.text((bubbles[0][0] - 9, bubbles[0][1] - 52), str(column), fill="black", font=self.load_font(30))
+            for digit, (bubble_x, bubble_y) in enumerate(bubbles):
+                self.draw_bubble(draw, bubble_x, bubble_y, radius)
+                if column == 1:
+                    draw.text((bubble_x - 58, bubble_y - 14), str(digit), fill="black", font=self.load_font(30))
 
     # ========================================================
     # QR
@@ -1480,7 +1559,8 @@ class OMRGenerator:
         page_number,
         total_pages,
         first_question,
-        questions_on_page
+        questions_on_page,
+        page_type="answers"
     ):
 
         if not self.qr_enabled:
@@ -1503,7 +1583,8 @@ class OMRGenerator:
             page_number,
             total_pages,
             first_question,
-            questions_on_page
+            questions_on_page,
+            page_type
         )
 
         qr = qrcode.QRCode(
@@ -1650,10 +1731,11 @@ class OMRGenerator:
         self,
         draw,
         x,
-        y
+        y,
+        radius=None
     ):
 
-        radius = self.BUBBLE_RADIUS
+        radius = radius or self.BUBBLE_RADIUS
 
         draw.ellipse(
             [
@@ -2021,14 +2103,8 @@ class OMRGenerator:
             * max_columns
         )
 
-        total_pages = max(
-            1,
-
-            math.ceil(
-                self.questions
-                / questions_per_page
-            )
-        )
+        answer_pages = max(1, math.ceil(self.questions / questions_per_page))
+        total_pages = answer_pages + (1 if self.cbse_identity else 0)
 
         current_question = 1
 
@@ -2037,16 +2113,14 @@ class OMRGenerator:
             total_pages + 1
         ):
 
-            remaining = (
-                self.questions
-                - current_question
-                + 1
-            )
-
-            questions_on_page = min(
-                remaining,
-                questions_per_page
-            )
+            identity_page = self.cbse_identity and page_number == 1
+            if identity_page:
+                questions_on_page = 0
+                first_question = 1
+            else:
+                first_question = current_question
+                remaining = self.questions - current_question + 1
+                questions_on_page = min(remaining, questions_per_page)
 
             image, draw = (
                 self.create_page()
@@ -2067,7 +2141,8 @@ class OMRGenerator:
             self.draw_header(
                 draw,
                 page_number,
-                total_pages
+                total_pages,
+                identity_page
             )
 
             self.draw_qr(
@@ -2075,23 +2150,19 @@ class OMRGenerator:
                 draw,
                 page_number,
                 total_pages,
-                current_question,
-                questions_on_page
+                first_question,
+                questions_on_page,
+                "identity" if identity_page else "answers"
             )
 
-            self.draw_questions(
-                draw,
-                current_question,
-                questions_on_page
-            )
+            if not identity_page:
+                self.draw_questions(draw, first_question, questions_on_page)
 
             self.pages.append(
                 image
             )
 
-            current_question += (
-                questions_on_page
-            )
+            current_question += questions_on_page
 
         return self.pages
 

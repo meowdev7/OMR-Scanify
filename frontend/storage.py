@@ -126,10 +126,10 @@ def delete_answer_key(project_id):
     return response.json()
 
 
-def submit_submission(project_id, sheet_id, answers, student=None, scan=None):
+def submit_submission(project_id, sheet_id, answers, student=None, scan=None, student_details=None, identity_status=None, identity_mismatches=None):
     response = requests.post(
         f"{API_URL}/projects/{project_id}/submissions",
-        json={"sheet_id": sheet_id, "answers": answers, "student": student or {}, "scan": scan or []},
+        json={"sheet_id": sheet_id, "answers": answers, "student": student or {}, "student_details": student_details or {}, "identity_status": identity_status or "not_checked", "identity_mismatches": identity_mismatches or [], "scan": scan or []},
         timeout=30,
     )
     response.raise_for_status()

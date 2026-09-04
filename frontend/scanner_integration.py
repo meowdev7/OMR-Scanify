@@ -12,7 +12,7 @@ def scan_answer_sheet_files(files, question_count, templates_directory=None, deb
     templates_path = Path(templates_directory or services_directory / "Templates")
     debug_path = Path(debug_directory or services_directory / "Output" / "debug")
     scanner = OMRScanner(templates_path)
-    submissions = []
+    scanned_sheets = {}
     failures = []
 
     for file_path in files:
@@ -25,38 +25,36 @@ def scan_answer_sheet_files(files, question_count, templates_directory=None, deb
             if not pages:
                 raise ValueError("The scanner did not produce a page result.")
 
-            pages.sort(key=lambda page: (int(page.get("page", 1)), int(page.get("first_question", 1))))
-            sheet_id = str(pages[0].get("sheet_id", "")).strip()
+            sheet_id = str(next((page.get("sheet_id") for page in pages if page.get("sheet_id")), "")).strip()
             if not sheet_id:
                 raise ValueError("No student ID was found in the sheet QR code.")
-            student = normalize_student(pages[0].get("student"), sheet_id)
-
-            answers_by_question = {}
-            scan_details = []
-            for page in pages:
-                if str(page.get("sheet_id", "")).strip() != sheet_id:
-                    raise ValueError("The uploaded pages contain different student IDs.")
-                if normalize_student(page.get("student"), sheet_id) != student:
-                    raise ValueError("The uploaded pages contain different student details.")
-                for question in page.get("questions") or []:
-                    question_number = int(question["question"])
-                    answer = normalize_answer(question.get("answer"))
-                    answers_by_question[question_number] = answer
-                    scan_details.append({
-                        "question": question_number,
-                        "answer": answer,
-                        "confidence": float(question.get("confidence") or 0),
-                        "page": int(page.get("page", 1)),
-                    })
-
-            answers = [answers_by_question.get(number) for number in range(1, int(question_count) + 1)]
-            missing_questions = [number for number in range(1, int(question_count) + 1) if number not in answers_by_question]
-            if missing_questions:
-                raise ValueError(f"The scan is missing question(s): {', '.join(map(str, missing_questions[:8]))}.")
-
-            submissions.append({"file": str(path), "sheet_id": sheet_id, "student": student, "answers": answers, "scan": scan_details})
+            scanned_sheets.setdefault(sheet_id, {"files": [], "pages": []})["files"].append(str(path))
+            scanned_sheets[sheet_id]["pages"].extend(pages)
         except Exception as error:
             failures.append({"file": str(path), "error": str(error)})
+
+    submissions = []
+    for sheet_id, sheet in scanned_sheets.items():
+        pages = sorted(sheet["pages"], key=lambda page: (int(page.get("page", 1)), int(page.get("first_question", 1))))
+        student = normalize_student(pages[0].get("student"), sheet_id)
+        identity_page = next((page for page in pages if page.get("page_type") == "identity"), pages[0])
+        student_details = normalize_student_details(identity_page.get("student_details"))
+        identity_mismatches = compare_identity(student, student_details)
+        answers_by_question = {}
+        scan_details = []
+        for page in pages:
+            if str(page.get("sheet_id", "")).strip() != sheet_id:
+                failures.append({"file": ", ".join(sheet["files"]), "error": "The uploaded pages contain different student IDs."})
+                continue
+            for question in page.get("questions") or []:
+                question_number = int(question["question"])
+                answers_by_question[question_number] = normalize_answer(question.get("answer"))
+                scan_details.append({"question": question_number, "answer": answers_by_question[question_number], "confidence": float(question.get("confidence") or 0), "page": int(page.get("page", 1))})
+        missing_questions = [number for number in range(1, int(question_count) + 1) if number not in answers_by_question]
+        if missing_questions:
+            failures.append({"file": ", ".join(sheet["files"]), "error": f"The scan is missing question(s): {', '.join(map(str, missing_questions[:8]))}."})
+            continue
+        submissions.append({"file": ", ".join(sheet["files"]), "sheet_id": sheet_id, "student": student, "student_details": student_details, "identity_status": "mismatch" if identity_mismatches else "verified", "identity_mismatches": identity_mismatches, "answers": [answers_by_question[number] for number in range(1, int(question_count) + 1)], "scan": scan_details})
 
     return submissions, failures
 
@@ -82,3 +80,25 @@ def normalize_student(value, sheet_id=""):
     if not details["id"] or not details["name"]:
         raise ValueError("The sheet QR code does not contain a student name.")
     return details
+
+
+def normalize_student_details(value):
+    details = value if isinstance(value, dict) else {}
+    return {
+        key: str(details.get(key) or "").strip()
+        for key in ("name", "subject", "roll_no", "class", "section", "set")
+    }
+
+
+def compare_identity(student, details):
+    pairs = {
+        "name": "name",
+        "class": "class",
+        "section": "section",
+        "roll_no": "roll_no",
+    }
+    return [
+        field
+        for field, student_field in pairs.items()
+        if details.get(field) and details[field] != "?" and details[field].upper() != str(student.get(student_field, "")).upper()
+    ]
